@@ -1,12 +1,12 @@
-# Project: NAME
+# Project: Ripplet backend (gpt routes + helpers)
 
 ## Contributors
-NAME, NAME, NAME
+Emma Scally, Xiaolin Liu
 
 ## Dependencies
-- LANGUAGE AND VERSION
-- EXTERNAL LIBRARIES
-- ETC
+- Python 13
+- 
+
 
 ## Build Instructions
-HOW TO BUILD YOUR PROJECT.
+- Project is not buildable in this repo because there is too much setup. This will be tested and confirmed in the original project repo. 
