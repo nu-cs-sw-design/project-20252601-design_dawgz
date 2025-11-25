@@ -279,6 +279,19 @@ def select_skill_id(db_session, userid, classid):
         {"user_id": userid, "class_id": classid},
     )
 
+def select_skill_id_from_item_skills(db_session, userid, classid):
+    
+    db_session.execute(
+        text(
+            """
+            SELECT skill_id FROM item_skills
+            WHERE user_id = :user_id AND class_id = :class_id
+            ORDER BY skill_id DESC LIMIT 1
+        """
+        ),
+        {"user_id": userid, "class_id": classid},
+    )
+
 def select_requirements(db_session, user_id, req_id):
     db_session.execute(
         text(
