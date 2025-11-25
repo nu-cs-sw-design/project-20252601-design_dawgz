@@ -244,20 +244,21 @@ def process_syllabus():
                 )
 
             #SQL: INSERT INTO TESTS
-            db.session.execute(
-                text(
-                    """INSERT INTO tests 
-                    (user_id, class_id, test_id, item_id, order_number)
-                    VALUES (:user_id, :class_id, :test_id, :item_id, :order_number)"""
-                ),
-                {
-                    "user_id": user_id,
-                    "class_id": class_id,
-                    "test_id": test_id,
-                    "item_id": item_id,
-                    "order_number": current_order,
-                },
-            )
+            insert_tests(user_id, class_id, test_id, item_id, order_number)
+            # db.session.execute(
+            #     text(
+            #         """INSERT INTO tests 
+            #         (user_id, class_id, test_id, item_id, order_number)
+            #         VALUES (:user_id, :class_id, :test_id, :item_id, :order_number)"""
+            #     ),
+            #     {
+            #         "user_id": user_id,
+            #         "class_id": class_id,
+            #         "test_id": test_id,
+            #         "item_id": item_id,
+            #         "order_number": current_order,
+            #     },
+            # )
 
             #SQL: INSERT INTO ITEM TOPICS
             for topic_name in item_response.relatedtopics:
