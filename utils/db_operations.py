@@ -24,6 +24,7 @@ def get_db_connection():
         port=os.getenv("DB_PORT")
     )
 
+
 def fetch_next_order_number(db_session, user_id, class_id, test_id, desired_order=None, num_items=1):
     """
     Get the next order number for a test item, either at a specific position or at the end.    

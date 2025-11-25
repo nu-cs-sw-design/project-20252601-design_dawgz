@@ -105,25 +105,26 @@ def modify_item():
 
     try:
         # Find item in 'item_history'
-        query = text(
-            """
-            SELECT question_part, answer_part, format, difficulty, wrong_answer_explanation
-            FROM item_history
-            WHERE user_id = :user_id AND class_id = :class_id AND item_id = :item_id AND version = :version
-            """
-        )
-        query_result = db.session.execute(
-            query,
-            {
-                "user_id": userid,
-                "class_id": classid,
-                "item_id": itemid,
-                "version": version,
-            },
-        ).fetchall()
+        item = fetch_item_data(userid, classid, itemid, version)[:5]
+        # query = text(
+        #     """
+        #     SELECT question_part, answer_part, format, difficulty, wrong_answer_explanation
+        #     FROM item_history
+        #     WHERE user_id = :user_id AND class_id = :class_id AND item_id = :item_id AND version = :version
+        #     """
+        # )
+        # query_result = db.session.execute(
+        #     query,
+        #     {
+        #         "user_id": userid,
+        #         "class_id": classid,
+        #         "item_id": itemid,
+        #         "version": version,
+        #     },
+        # ).fetchall()
 
-        if not query_result:
-            return jsonify({"message": "Item not found in item_history table"}), 404
+        # if not query_result:
+        #     return jsonify({"message": "Item not found in item_history table"}), 404
 
         col_names = [
             "question_part",
@@ -132,7 +133,7 @@ def modify_item():
             "difficulty",
             "wrong_answer_explanation",
         ]
-        generated_item = [dict(zip(col_names, query_result)) for row in query_result]
+        generated_item = {key: item[key] for key in col_names}
 
         if format == "MC":
             user_content = config["prompts"]["modification_MCQ"].format(
@@ -204,15 +205,16 @@ def modify_item():
         relatedskills = item_response.relatedskills
 
         # set the next version to be the highest version existing + 1
-        query = text(
-            """
-            SELECT MAX(version) AS highest_version
-            FROM item_history
-            WHERE item_id = :item_id
-        """
-        )
-        result = db.session.execute(query, {"item_id": itemid}).fetchone()
-        highest_version = result[0] + 1
+        # query = text(
+        #     """
+        #     SELECT MAX(version) AS highest_version
+        #     FROM item_history
+        #     WHERE item_id = :item_id
+        # """
+        # )
+        # result = db.session.execute(query, {"item_id": itemid}).fetchone()
+        result = fetch_item_latest_version(userid, classid, itemid)
+        highest_version = result + 1
 
         modify_item = {
             "version": highest_version,
