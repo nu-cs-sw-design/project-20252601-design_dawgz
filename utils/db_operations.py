@@ -161,41 +161,43 @@ def insert_item_history(db_session, user_id, class_id, item_id, version, questio
         None
     """
     db_session.execute(
-                text(
-                    """INSERT INTO item_history 
-                    (user_id, class_id, item_id, version, question_part, answer_part, format, difficulty, wrong_answer_explanation)
-                    VALUES (:user_id, :class_id, :item_id, :version, :question_part, :answer_part, :format, :difficulty, :wrong_answer_explanation)"""
-                ),
-                {
-                    "user_id": user_id,
-                    "class_id": class_id,
-                    "item_id": item_id,
-                    "version": version,
-                    "question_part": question,
-                    "answer_part": answer_part,
-                    "format": question_type,
-                    "difficulty": difficulty,
-                    "wrong_answer_explanation": wrong_answer_explanation,
-                },
-            )
+        text(
+            """INSERT INTO item_history 
+            (user_id, class_id, item_id, version, question_part, answer_part, format, difficulty, wrong_answer_explanation)
+            VALUES (:user_id, :class_id, :item_id, :version, :question_part, :answer_part, :format, :difficulty, :wrong_answer_explanation)"""
+        ),
+        {
+            "user_id": user_id,
+            "class_id": class_id,
+            "item_id": item_id,
+            "version": version,
+            "question_part": question,
+            "answer_part": answer_part,
+            "format": question_type,
+            "difficulty": difficulty,
+            "wrong_answer_explanation": wrong_answer_explanation,
+        },
+    )
 
 
 def insert_item_topics(db_session, user_id, class_id, item_id, version, topic_id, topic_name):
     db_session.execute(
-                    text(
-                        """INSERT INTO item_topics 
-                        (user_id, class_id, item_id, version, topic_id, topic_name)
-                        VALUES (:user_id, :class_id, :item_id, :version, :topic_id, :topic_name)"""
-                    ),
-                    {
-                        "user_id": user_id,
-                        "class_id": class_id,
-                        "item_id": item_id,
-                        "version": version,
-                        "topic_id": topic_id,
-                        "topic_name": topic_name,
-                    },
-                )
+        text(
+            """
+            INSERT INTO item_topics 
+            (user_id, class_id, item_id, version, topic_id, topic_name)
+            VALUES (:user_id, :class_id, :item_id, :version, :topic_id, :topic_name)
+            """
+        ),
+        {
+            "user_id": user_id,
+            "class_id": class_id,
+            "item_id": item_id,
+            "version": version,
+            "topic_id": topic_id,
+            "topic_name": topic_name,
+        },
+    )
 
 
 def insert_item_skills(db_session, user_id, class_id, item_id, version, skill_id, skill_name):
