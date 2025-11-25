@@ -5,6 +5,10 @@ import os
 import json
 from sqlalchemy import text
 
+
+# HELPER FUNCS!
+
+
 # Load environment variables
 load_dotenv()
 
@@ -74,6 +78,203 @@ def fetch_next_order_number(db_session, user_id, class_id, test_id, desired_orde
         max_order = result
     
     return max_order + 1
+
+
+#helper function added to fetch highest topic id
+def fetch_highest_topic_id(db_session, user_id, class_id):
+    """
+    Get the highest topic_id from item_topics for a given user_id and class_id.
+    
+    Args:
+        user_id (str): The user's ID
+        class_id (str): The class ID
+        
+    Returns:
+        str or None: The highest topic_id, or None if no topics exist
+    """
+    if isinstance(db_session, psycopg2.extensions.cursor):
+        db_session.execute("""
+            SELECT topic_id FROM item_topics
+            WHERE user_id = %s AND class_id = %s
+            ORDER BY topic_id DESC LIMIT 1
+        """, (user_id, class_id))
+        result = db_session.fetchone()
+        return result[0] if result else None
+    else:
+        result = db_session.execute(
+            text("""
+                SELECT topic_id FROM item_topics
+                WHERE user_id = :user_id AND class_id = :class_id
+                ORDER BY topic_id DESC LIMIT 1
+            """),
+            {
+                "user_id": user_id,
+                "class_id": class_id
+            }
+        ).fetchone()
+        return result[0] if result else None
+
+#helper function to insert into item_current
+def insert_item_current(db_session, user_id, class_id, item_id, version):
+    """
+    Insert a record into item_current table.
+    
+    Args:
+        user_id (str): The user's ID
+        class_id (str): The class ID
+        item_id (str): The item ID
+        version (int): The version number
+        
+    Returns:
+        None
+    """
+    db_session.execute(
+        text("""
+            INSERT INTO item_current (user_id, class_id, item_id, version)
+            VALUES (:user_id, :class_id, :item_id, :version)
+        """),
+        {
+            "user_id": user_id,
+            "class_id": class_id,
+            "item_id": item_id,
+            "version": version
+        }
+    )
+
+
+def insert_item_history(db_session, user_id, class_id, item_id, version, question, answer_part_, question_type, difficulty, wrong_answer_explanation):
+    """
+    Insert a record into item_current table.
+    
+    Args:
+        user_id (str): The user's ID
+        class_id (str): The class ID
+        item_id (str): The item ID
+        version (int): The version number
+        question (str): The question part
+        answer_part (str): The answer part
+        question_type (str): The question type
+        difficulty (str): The difficulty
+        wrong_answer_explanation (str): The wrong answer explanation
+        
+    Returns:
+        None
+    """
+    db_session.execute(
+                text(
+                    """INSERT INTO item_history 
+                    (user_id, class_id, item_id, version, question_part, answer_part, format, difficulty, wrong_answer_explanation)
+                    VALUES (:user_id, :class_id, :item_id, :version, :question_part, :answer_part, :format, :difficulty, :wrong_answer_explanation)"""
+                ),
+                {
+                    "user_id": user_id,
+                    "class_id": class_id,
+                    "item_id": item_id,
+                    "version": version,
+                    "question_part": question,
+                    "answer_part": answer_part,
+                    "format": question_type,
+                    "difficulty": difficulty,
+                    "wrong_answer_explanation": wrong_answer_explanation,
+                },
+            )
+
+def insert_item_topics(db_session, user_id, class_id, item_id, version, topic_id, topic_name):
+    db_session.execute(
+                    text(
+                        """INSERT INTO item_topics 
+                        (user_id, class_id, item_id, version, topic_id, topic_name)
+                        VALUES (:user_id, :class_id, :item_id, :version, :topic_id, :topic_name)"""
+                    ),
+                    {
+                        "user_id": user_id,
+                        "class_id": class_id,
+                        "item_id": item_id,
+                        "version": version,
+                        "topic_id": topic_id,
+                        "topic_name": topic_name,
+                    },
+                )
+
+def insert_item_skills(db_session, user_id, class_id, item_id, version, skill_id, skill_name):
+     db_session.execute(
+                    text(
+                        """INSERT INTO item_skills 
+                        (user_id, class_id, item_id, version, skill_id, skill_name)
+                        VALUES (:user_id, :class_id, :item_id, :version, :skill_id, :skill_name)"""
+                    ),
+                    {
+                        "user_id": user_id,
+                        "class_id": class_id,
+                        "item_id": item_id,
+                        "version": version,
+                        "skill_id": skill_id,
+                        "skill_name": skill_name,
+                    },
+                )
+
+def insert_tests(db_session, user_id, class_id, test_id, item_id, order_number):
+    db_session.execute(
+                text(
+                    """
+                INSERT INTO tests (user_id, class_id, test_id, item_id, order_number)
+                VALUES (:user_id, :class_id, :testid, :item_id, :order_number)
+            """
+                ),
+                {
+                    "user_id": userid,
+                    "class_id": classid,
+                    "testid": test_id,
+                    "item_id": item_id,
+                    "order_number": current_order,
+                },
+            )
+
+
+def select_unique_class(db_session, user_id, class_id):
+    existing_class = db_session.execute(
+        text(
+            "SELECT 1 FROM user_classes WHERE user_id = :user_id AND class_id = :class_id"
+        ),
+        {"user_id": user_id, "class_id": class_id},
+    ).fetchone()
+    if not existing_class:
+            db.session.execute(
+                text(
+                "INSERT INTO user_classes (user_id, class_id) VALUES (:user_id, :class_id)"
+                ),
+                {"user_id": user_id, "class_id": class_id},
+            )
+
+
+def select_topic_id(db_session, userid, classid):
+    
+    db_session.execute(
+        text(
+            """
+            SELECT topic_id FROM item_topics
+            WHERE user_id = :user_id AND class_id = :class_id
+            ORDER BY topic_id DESC LIMIT 1
+        """
+        ),
+        {"user_id": userid, "class_id": classid},
+    )
+
+def select_skill_id(db_session, userid, classid):
+    
+    db_session.execute(
+        text(
+            """
+            SELECT topic_id FROM item_skills
+            WHERE user_id = :user_id AND class_id = :class_id
+            ORDER BY topic_id DESC LIMIT 1
+        """
+        ),
+        {"user_id": userid, "class_id": classid},
+    )
+
+
+
 
 def add_to_database(user_id, class_id, test_id, questions, order_number=None):
     """
