@@ -244,7 +244,7 @@ def process_syllabus():
                 )
 
             #SQL: INSERT INTO TESTS
-            insert_tests(user_id, class_id, test_id, item_id, order_number)
+            insert_tests(db.session, user_id, class_id, test_id, item_id, order_number)
             # db.session.execute(
             #     text(
             #         """INSERT INTO tests 
@@ -471,21 +471,22 @@ def pdf_upload():
             answer_part = item.answer_part
 
         try:
-            existing_class = db.session.execute(
-                text(
-                    "SELECT 1 FROM user_classes WHERE user_id = :user_id AND class_id = :class_id"
-                ),
-                {"user_id": userid, "class_id": classid},
-            ).fetchone()
+            select_unique_class(db.session, userid, classid)
+            # existing_class = db.session.execute(
+            #     text(
+            #         "SELECT 1 FROM user_classes WHERE user_id = :user_id AND class_id = :class_id"
+            #     ),
+            #     {"user_id": userid, "class_id": classid},
+            # ).fetchone()
 
-            #SQL: INSERT INTO USER CLASSES
-            if not existing_class:
-                db.session.execute(
-                    text(
-                        "INSERT INTO user_classes (user_id, class_id) VALUES (:user_id, :class_id)"
-                    ),
-                    {"user_id": userid, "class_id": classid},
-                )
+            # #SQL: INSERT INTO USER CLASSES
+            # if not existing_class:
+            #     db.session.execute(
+            #         text(
+            #             "INSERT INTO user_classes (user_id, class_id) VALUES (:user_id, :class_id)"
+            #         ),
+            #         {"user_id": userid, "class_id": classid},
+            #     )
                 
           
             #helper func replacement 
