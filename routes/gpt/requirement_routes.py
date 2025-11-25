@@ -17,6 +17,7 @@ from ...utils.db_operations import (
     fetch_item_latest_version,
     fetch_item_data,
     add_requirement_to_database,
+    select_requirements
 )
 from ...utils.compare_reqs import compare_reqs
 
@@ -62,18 +63,10 @@ def apply_requirements():
     requirements_dict = {}
 
     for req_id in req_ids:
-        query = text(
-            """
-            SELECT content, question, answer, wrong_answer_explanation, topics, skills
-            FROM requirements
-            WHERE user_id = :user_id
-                AND req_id = :req_id
-        """
-        )
 
-        result = db.session.execute(
-            query, {"user_id": user_id, "req_id": req_id}
-        ).fetchone()
+        #SQL
+
+        result = select_requirements(db.session, user_id, req_id).fetchone()
 
         if not result:
             return jsonify({"message": f"Requirement {req_id} not found"}), 404

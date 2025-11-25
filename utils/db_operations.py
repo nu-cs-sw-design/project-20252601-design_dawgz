@@ -279,6 +279,20 @@ def select_skill_id(db_session, userid, classid):
         {"user_id": userid, "class_id": classid},
     )
 
+def select_requirements(db_session, user_id, req_id):
+    db_session.execute(
+        text(
+            """
+            SELECT content, question, answer, wrong_answer_explanation, topics, skills
+            FROM requirements
+            WHERE user_id = :user_id
+                AND req_id = :req_id
+        """
+        ),
+        {"user_id": user_id, "class_id": req_id},
+    )
+    
+
 
 def add_to_database(user_id, class_id, test_id, questions, order_number=None):
     """
