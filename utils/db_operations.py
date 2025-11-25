@@ -80,7 +80,6 @@ def fetch_next_order_number(db_session, user_id, class_id, test_id, desired_orde
     return max_order + 1
 
 
-#helper function added to fetch highest topic id
 def fetch_highest_topic_id(db_session, user_id, class_id):
     """
     Get the highest topic_id from item_topics for a given user_id and class_id.
@@ -114,7 +113,7 @@ def fetch_highest_topic_id(db_session, user_id, class_id):
         ).fetchone()
         return result[0] if result else None
 
-#helper function to insert into item_current
+
 def insert_item_current(db_session, user_id, class_id, item_id, version):
     """
     Insert a record into item_current table.
@@ -142,7 +141,7 @@ def insert_item_current(db_session, user_id, class_id, item_id, version):
     )
 
 
-def insert_item_history(db_session, user_id, class_id, item_id, version, question, answer_part_, question_type, difficulty, wrong_answer_explanation):
+def insert_item_history(db_session, user_id, class_id, item_id, version, question, answer_part, question_type, difficulty, wrong_answer_explanation):
     """
     Insert a record into item_current table.
     
@@ -179,6 +178,7 @@ def insert_item_history(db_session, user_id, class_id, item_id, version, questio
                 },
             )
 
+
 def insert_item_topics(db_session, user_id, class_id, item_id, version, topic_id, topic_name):
     db_session.execute(
                     text(
@@ -195,6 +195,7 @@ def insert_item_topics(db_session, user_id, class_id, item_id, version, topic_id
                         "topic_name": topic_name,
                     },
                 )
+
 
 def insert_item_skills(db_session, user_id, class_id, item_id, version, skill_id, skill_name):
      db_session.execute(
@@ -213,23 +214,24 @@ def insert_item_skills(db_session, user_id, class_id, item_id, version, skill_id
                     },
                 )
 
+
 def insert_tests(db_session, user_id, class_id, test_id, item_id, order_number):
     db_session.execute(
-                text(
-                    """
-                INSERT INTO tests (user_id, class_id, test_id, item_id, order_number)
-                VALUES (:user_id, :class_id, :testid, :item_id, :order_number)
+        text(
             """
-                ),
-                {
-                    "user_id": userid,
-                    "class_id": classid,
-                    "testid": test_id,
-                    "item_id": item_id,
-                    "order_number": current_order,
-                },
-            )
-
+            INSERT INTO tests (user_id, class_id, test_id, item_id, order_number)
+            VALUES (:user_id, :class_id, :testid, :item_id, :order_number)
+            """
+        ),
+        {
+            "user_id": user_id,
+            "class_id": class_id,
+            "testid": test_id,
+            "item_id": item_id,
+            "order_number": order_number,
+        },
+    )
+ 
 
 def select_unique_class(db_session, user_id, class_id):
     existing_class = db_session.execute(
@@ -239,7 +241,7 @@ def select_unique_class(db_session, user_id, class_id):
         {"user_id": user_id, "class_id": class_id},
     ).fetchone()
     if not existing_class:
-            db.session.execute(
+            db_session.execute(
                 text(
                 "INSERT INTO user_classes (user_id, class_id) VALUES (:user_id, :class_id)"
                 ),
@@ -260,6 +262,7 @@ def select_topic_id(db_session, userid, classid):
         {"user_id": userid, "class_id": classid},
     )
 
+
 def select_skill_id(db_session, userid, classid):
     
     db_session.execute(
@@ -272,8 +275,6 @@ def select_skill_id(db_session, userid, classid):
         ),
         {"user_id": userid, "class_id": classid},
     )
-
-
 
 
 def add_to_database(user_id, class_id, test_id, questions, order_number=None):
@@ -373,6 +374,7 @@ def add_to_database(user_id, class_id, test_id, questions, order_number=None):
         cur.close()
         conn.close()
 
+
 def fetch_item_latest_version(user_id, class_id, item_id):
     conn = get_db_connection()
     cur = conn.cursor()
@@ -396,7 +398,8 @@ def fetch_item_latest_version(user_id, class_id, item_id):
     finally:
         cur.close()
         conn.close()
-        
+      
+  
 def fetch_item_data(user_id, class_id, item_id, version):
     conn = get_db_connection()
     cur = conn.cursor()
@@ -456,6 +459,7 @@ def fetch_item_data(user_id, class_id, item_id, version):
         cur.close()
         conn.close()
 
+
 def add_requirement_to_database(user_id, class_id, test_id, item_id, req_id, version, content, usage_count, application_count, contentType):
     """
     Save requirement into the database.
@@ -497,6 +501,7 @@ def add_requirement_to_database(user_id, class_id, test_id, item_id, req_id, ver
                 conn.commit()
     except Exception as e:
         raise Exception(f"Failed to add requirement: {e}")
+
 
 def generate_unique_test_id(base_name, user_id, class_id):
     conn = get_db_connection()
