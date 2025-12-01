@@ -19,7 +19,7 @@ from io import BytesIO
 from pdf2image import convert_from_bytes
 from models import ExtractedQuestion
 from ...utils.class_info import get_class_info
-from ...utils.db_operations import fetch_next_order_number, fetch_highest_topic_id, insert_item_current, insert_item_history, select_unique_class, insert_item_skills, insert_tests, select_topic_id, select_skill_id
+from ...utils.db_operations import fetch_next_order_number, fetch_highest_topic_id, insert_item_current, insert_item_history, select_unique_class, insert_item_skills, insert_tests, select_topic_id, select_skill_id, select_skill_id_from_item_skills
 from ...utils.testconvert import normalize_pdf_images_to_summary
 from werkzeug.utils import secure_filename
 
@@ -161,12 +161,8 @@ def process_syllabus():
     highest_topic_id = fetch_highest_topic_id(db.session, user_id, class_id)
 
 #SQL: SELECT SKILL ID FROM ITEM_SKILLS 
-    highest_skill_result = db.session.execute(
-        text(
-            "SELECT skill_id FROM item_skills WHERE user_id = :user_id AND class_id = :class_id ORDER BY skill_id DESC LIMIT 1"
-        ),
-        {"user_id": user_id, "class_id": class_id},
-    ).fetchone()
+    
+    highest_skill_result = select_skill_id_from_item_skills(db.session, user_id, class_id).fetchone()
 
     def get_next_id(current_id, prefix):
         if not current_id:

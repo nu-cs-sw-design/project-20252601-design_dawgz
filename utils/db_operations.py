@@ -3,7 +3,11 @@ import uuid
 from dotenv import load_dotenv
 import os
 import json
+
+import sqlalchemy
+#orm library is sqlalchemy
 from sqlalchemy import text
+from sqlalchemy.orm import Session, ForeignKey, String, DeclarativeBase, Mapped, mapped_column, relationship
 
 # HELPER FUNCS!
 
@@ -78,16 +82,7 @@ def fetch_next_order_number(db_session, user_id, class_id, test_id, desired_orde
     return max_order + 1
 
 def fetch_highest_topic_id(db_session, user_id, class_id):
-    """
-    Get the highest topic_id from item_topics for a given user_id and class_id.
     
-    Args:
-        user_id (str): The user's ID
-        class_id (str): The class ID
-        
-    Returns:
-        str or None: The highest topic_id, or None if no topics exist
-    """
     if isinstance(db_session, psycopg2.extensions.cursor):
         db_session.execute("""
             SELECT topic_id FROM item_topics
