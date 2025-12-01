@@ -121,7 +121,7 @@ def insert_item_current(db_session, user_id, class_id, item_id, version):
         )
 
         db_session.add(curr_item)
-        db_session.commit()
+        #db_session.commit()
     except Exception as e:
         print(f"Error inserting test: {e}")
         db_session.rollback()
@@ -144,7 +144,7 @@ def insert_item_history(db_session, user_id, class_id, item_id, version, questio
 
         )
         db_session.add(history_item)
-        db_session.commit()
+        #db_session.commit()
     except Exception as e:
         print(f"Error inserting test: {e}")
         db_session.rollback()
@@ -183,7 +183,7 @@ def insert_item_topics(db_session, user_id, class_id, item_id, version, topic_id
         )
         
         db_session.add(topic_item)
-        db_session.commit()
+        #db_session.commit()
     except Exception as e:
         print(f"Error inserting test: {e}")
         db_session.rollback()
@@ -201,7 +201,7 @@ def insert_item_skills(db_session, user_id, class_id, item_id, version, skill_id
         )
         
         db_session.add(topic_item)
-        db_session.commit()
+        #db_session.commit()
     except Exception as e:
         print(f"Error inserting test: {e}")
         db_session.rollback()
@@ -234,7 +234,7 @@ def insert_tests(db_session, user_id, class_id, test_id, item_id, order_number):
         )
 
         db_session.add(new_test)
-        db_session.commit()
+        #db_session.commit()
         print("Insert successful!")
 
         #return new_test  
@@ -271,6 +271,7 @@ def select_unique_class(db_session, user_id, class_id):
     if existing_class is None:
         new_class = UserClasses(user_id=user_id, class_id=class_id)
         db_session.add(new_class)
+        #db_session.commit()
         return new_class
     else:
         
@@ -599,7 +600,7 @@ def fetch_item_data(db_session, user_id, class_id, item_id, version):
     #     cur.close()
     #     conn.close()
 
-def add_requirement_to_database(user_id, class_id, test_id, item_id, req_id, version, content, usage_count, application_count, contentType):
+def add_requirement_to_database(db_session, user_id, class_id, test_id, item_id, req_id, version, content, usage_count, application_count, contentType):
     """
     Save requirement into the database.
     
