@@ -104,8 +104,8 @@ def modify_item():
     client = openai.OpenAI()
 
     try:
-        # Find item in 'item_history'
-        item = fetch_item_data(userid, classid, itemid, version)[:5]
+        # Find item in item_history
+        item = fetch_item_data(userid, classid, itemid, version)
         # query = text(
         #     """
         #     SELECT question_part, answer_part, format, difficulty, wrong_answer_explanation
@@ -136,6 +136,7 @@ def modify_item():
         generated_item = {key: item[key] for key in col_names}
 
         if format == "MC":
+            print("MC modification")
             user_content = config["prompts"]["modification_MCQ"].format(
                 class_name=classname,
                 class_description=classdesc,
@@ -196,7 +197,6 @@ def modify_item():
             wrong_answer_explanation = item_response.wrong_answer_explanation
 
             # answer_part is concatenation
-
             answer_part = item_response.answer_part
 
         question = item_response.question_part
@@ -204,7 +204,7 @@ def modify_item():
         relatedtopics = item_response.relatedtopics
         relatedskills = item_response.relatedskills
 
-        # set the next version to be the highest version existing + 1
+        # Set the next version to be the highest version existing + 1
         # query = text(
         #     """
         #     SELECT MAX(version) AS highest_version
@@ -372,4 +372,3 @@ def edit_item_component():
     except Exception as e:
         print("Error during GPT API call:", str(e))
         return jsonify({"message": "Error during GPT API call", "error": str(e)}), 500
-
