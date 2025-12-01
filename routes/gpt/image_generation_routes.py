@@ -16,14 +16,21 @@ from PIL import Image
 import base64
 from models import UnifiedQuestioSingleItem, ExtractedQuestion
 from ...utils.class_info import get_class_info
-from ...utils.db_operations import fetch_next_order_number, select_topic_id, select_skill_id, insert_item_current, insert_item_history, select_unique_class, insert_tests, insert_item_skills, insert_item_topics
-
+from ...utils.db_operations import (
+    fetch_next_order_number, 
+    fetch_highest_topic_id, 
+    select_skill_id, 
+    insert_item_current, 
+    insert_item_history, 
+    select_unique_class, 
+    insert_tests, 
+    insert_item_skills, 
+    insert_item_topics
+)
 # Load config.yaml
 config_path = os.path.join(os.path.dirname(__file__), "../../utils/config.yaml")
 with open(config_path, "r", encoding="utf-8") as f:
     config = yaml.safe_load(f)
-
-
 
 
 @gpt_bp.route("/generate_from_image", methods=["POST", "OPTIONS"])
@@ -131,21 +138,9 @@ def generate_from_image():
             continue
 
     inserted_items = []
-    highest_topic_result = select_topic_id(db.session, userid, classid).fetchone()
-    # highest_topic_result = db.session.execute(
-    #     text(
-    #         "SELECT topic_id FROM item_topics WHERE user_id = :user_id AND class_id = :class_id ORDER BY topic_id DESC LIMIT 1"
-    #     ),
-    #     {"user_id": userid, "class_id": classid},
-    # ).fetchone()
+    highest_topic_result = fetch_highest_topic_id(db.session, userid, classid)
 
-    highest_skill_result = select_skill_id(db.session, userid, classid).fetchone()
-    # highest_skill_result = db.session.execute(
-    #     text(
-    #         "SELECT skill_id FROM item_skills WHERE user_id = :user_id AND class_id = :class_id ORDER BY skill_id DESC LIMIT 1"
-    #     ),
-    #     {"user_id": userid, "class_id": classid},
-    # ).fetchone()
+    highest_skill_result = select_skill_id(db.session, userid, classid)
 
     def get_next_id(current_id, prefix):
         if not current_id:
