@@ -5,9 +5,7 @@ import os
 import json
 from sqlalchemy import text
 
-
 # HELPER FUNCS!
-
 
 # Load environment variables
 load_dotenv()
@@ -23,7 +21,6 @@ def get_db_connection():
         password=os.getenv("DB_PASSWORD"),
         port=os.getenv("DB_PORT")
     )
-
 
 def fetch_next_order_number(db_session, user_id, class_id, test_id, desired_order=None, num_items=1):
     """
@@ -80,7 +77,6 @@ def fetch_next_order_number(db_session, user_id, class_id, test_id, desired_orde
     
     return max_order + 1
 
-
 def fetch_highest_topic_id(db_session, user_id, class_id):
     """
     Get the highest topic_id from item_topics for a given user_id and class_id.
@@ -114,7 +110,6 @@ def fetch_highest_topic_id(db_session, user_id, class_id):
         ).fetchone()
         return result[0] if result else None
 
-
 def insert_item_current(db_session, user_id, class_id, item_id, version):
     """
     Insert a record into item_current table.
@@ -140,7 +135,6 @@ def insert_item_current(db_session, user_id, class_id, item_id, version):
             "version": version
         }
     )
-
 
 def insert_item_history(db_session, user_id, class_id, item_id, version, question, answer_part, question_type, difficulty, wrong_answer_explanation):
     """
@@ -179,7 +173,6 @@ def insert_item_history(db_session, user_id, class_id, item_id, version, questio
         },
     )
 
-
 def insert_item_topics(db_session, user_id, class_id, item_id, version, topic_id, topic_name):
     db_session.execute(
         text(
@@ -199,7 +192,6 @@ def insert_item_topics(db_session, user_id, class_id, item_id, version, topic_id
         },
     )
 
-
 def insert_item_skills(db_session, user_id, class_id, item_id, version, skill_id, skill_name):
      db_session.execute(
                     text(
@@ -217,7 +209,6 @@ def insert_item_skills(db_session, user_id, class_id, item_id, version, skill_id
                     },
                 )
 
-
 def insert_tests(db_session, user_id, class_id, test_id, item_id, order_number):
     db_session.execute(
         text(
@@ -234,7 +225,6 @@ def insert_tests(db_session, user_id, class_id, test_id, item_id, order_number):
             "order_number": order_number,
         },
     )
- 
 
 def select_unique_class(db_session, user_id, class_id):
     existing_class = db_session.execute(
@@ -251,10 +241,8 @@ def select_unique_class(db_session, user_id, class_id):
                 {"user_id": user_id, "class_id": class_id},
             )
 
-
 def select_topic_id(db_session, userid, classid):
-    
-    db_session.execute(
+    topic_id = db_session.execute(
         text(
             """
             SELECT topic_id FROM item_topics
@@ -263,21 +251,24 @@ def select_topic_id(db_session, userid, classid):
         """
         ),
         {"user_id": userid, "class_id": classid},
-    )
-
+    ).fetchone()
+    
+    return topic_id
+    
 
 def select_skill_id(db_session, userid, classid):
-    
-    db_session.execute(
+    skill_id = db_session.execute(
         text(
             """
-            SELECT topic_id FROM item_skills
+            SELECT skill_id FROM item_skills
             WHERE user_id = :user_id AND class_id = :class_id
-            ORDER BY topic_id DESC LIMIT 1
+            ORDER BY skill_id DESC LIMIT 1
         """
         ),
         {"user_id": userid, "class_id": classid},
-    )
+    ).fetchone()
+    
+    return skill_id
 
 def select_skill_id_from_item_skills(db_session, userid, classid):
     
@@ -305,8 +296,6 @@ def select_requirements(db_session, user_id, req_id):
         {"user_id": user_id, "class_id": req_id},
     )
     
-
-
 def add_to_database(user_id, class_id, test_id, questions, order_number=None):
     """
     Save structured questions into the database.
@@ -404,7 +393,6 @@ def add_to_database(user_id, class_id, test_id, questions, order_number=None):
         cur.close()
         conn.close()
 
-
 def fetch_item_latest_version(user_id, class_id, item_id):
     conn = get_db_connection()
     cur = conn.cursor()
@@ -428,7 +416,6 @@ def fetch_item_latest_version(user_id, class_id, item_id):
     finally:
         cur.close()
         conn.close()
-      
   
 def fetch_item_data(user_id, class_id, item_id, version):
     conn = get_db_connection()
@@ -489,7 +476,6 @@ def fetch_item_data(user_id, class_id, item_id, version):
         cur.close()
         conn.close()
 
-
 def add_requirement_to_database(user_id, class_id, test_id, item_id, req_id, version, content, usage_count, application_count, contentType):
     """
     Save requirement into the database.
@@ -531,7 +517,6 @@ def add_requirement_to_database(user_id, class_id, test_id, item_id, req_id, ver
                 conn.commit()
     except Exception as e:
         raise Exception(f"Failed to add requirement: {e}")
-
 
 def generate_unique_test_id(base_name, user_id, class_id):
     conn = get_db_connection()
