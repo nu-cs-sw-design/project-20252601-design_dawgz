@@ -7,7 +7,17 @@ import json
 import sqlalchemy
 #orm library is sqlalchemy
 from sqlalchemy import text
-from sqlalchemy.orm import Session, ForeignKey, String, DeclarativeBase, Mapped, mapped_column, relationship
+from sqlalchemy.orm import Session, ForeignKey, String, DeclarativeBase, Mapped, mapped_column, relationship, select, desc
+
+
+from .table_models import (
+    Tests,
+    ItemCurrent,
+    ItemHistory,
+    ItemTopics,
+    ItemSkills,
+)
+
 
 # HELPER FUNCS!
 
@@ -82,91 +92,84 @@ def fetch_next_order_number(db_session, user_id, class_id, test_id, desired_orde
     return max_order + 1
 
 def fetch_highest_topic_id(db_session, user_id, class_id):
+
+    stmt = (
+        select(ItemTopics.topic_id)
+        .where(
+            ItemTopics.user_id == user_id,
+            ItemTopics.class_id == class_id,
+        )
+        .order_by(desc(ItemTopics.topic_id))
+        .limit(1)
+    )
+
+   #returns the item topic ID if exists, otherwise returns none
+    result = db_session.execute(stmt).scalar_one_or_none()
+    return result
     
-    if isinstance(db_session, psycopg2.extensions.cursor):
-        db_session.execute("""
-            SELECT topic_id FROM item_topics
-            WHERE user_id = %s AND class_id = %s
-            ORDER BY topic_id DESC LIMIT 1
-        """, (user_id, class_id))
-        result = db_session.fetchone()
-        return result[0] if result else None
-    else:
-        result = db_session.execute(
-            text("""
-                SELECT topic_id FROM item_topics
-                WHERE user_id = :user_id AND class_id = :class_id
-                ORDER BY topic_id DESC LIMIT 1
-            """),
-            {
-                "user_id": user_id,
-                "class_id": class_id
-            }
-        ).fetchone()
-        return result[0] if result else None
+   
+
 
 def insert_item_current(db_session, user_id, class_id, item_id, version):
-    """
-    Insert a record into item_current table.
-    
-    Args:
-        user_id (str): The user's ID
-        class_id (str): The class ID
-        item_id (str): The item ID
-        version (int): The version number
-        
-    Returns:
-        None
-    """
-    db_session.execute(
-        text("""
-            INSERT INTO item_current (user_id, class_id, item_id, version)
-            VALUES (:user_id, :class_id, :item_id, :version)
-        """),
-        {
-            "user_id": user_id,
-            "class_id": class_id,
-            "item_id": item_id,
-            "version": version
-        }
+
+    new_item = ItemCurrent(
+        user_id = user_id,
+        class_id = class_id, 
+        item_id = item_id, 
+        version = version
     )
 
-def insert_item_history(db_session, user_id, class_id, item_id, version, question, answer_part, question_type, difficulty, wrong_answer_explanation):
-    """
-    Insert a record into item_current table.
+    db_session.add(new_item)
+    db_session.commit()
     
-    Args:
-        user_id (str): The user's ID
-        class_id (str): The class ID
-        item_id (str): The item ID
-        version (int): The version number
-        question (str): The question part
-        answer_part (str): The answer part
-        question_type (str): The question type
-        difficulty (str): The difficulty
-        wrong_answer_explanation (str): The wrong answer explanation
-        
-    Returns:
-        None
-    """
-    db_session.execute(
-        text(
-            """INSERT INTO item_history 
-            (user_id, class_id, item_id, version, question_part, answer_part, format, difficulty, wrong_answer_explanation)
-            VALUES (:user_id, :class_id, :item_id, :version, :question_part, :answer_part, :format, :difficulty, :wrong_answer_explanation)"""
-        ),
-        {
-            "user_id": user_id,
-            "class_id": class_id,
-            "item_id": item_id,
-            "version": version,
-            "question_part": question,
-            "answer_part": answer_part,
-            "format": question_type,
-            "difficulty": difficulty,
-            "wrong_answer_explanation": wrong_answer_explanation,
-        },
+    result = db_session.execute(stmt)
+    # db_session.execute(
+    #     text("""
+    #         INSERT INTO item_current (user_id, class_id, item_id, version)
+    #         VALUES (:user_id, :class_id, :item_id, :version)
+    #     """),
+    #     {
+    #         "user_id": user_id,
+    #         "class_id": class_id,
+    #         "item_id": item_id,
+    #         "version": version
+    #     }
+    # )
+
+
+def insert_item_history(db_session, user_id, class_id, item_id, version, question, answer_part, question_type, difficulty, wrong_answer_explanation):
+    
+    history_item = ItemHistory(
+        "user_id": user_id,
+    #         class_id = class_id,
+    #         item_id = item_id,
+    #         version = version,
+    #         question_part = question,
+    #         answer_part = answer_part,
+    #         format = question_type,
+    #         difficulty = difficulty,
+    #         wrong_answer_explanation = wrong_answer_explanation
+
     )
+    # db_session.execute(
+    #     text(
+    #         """INSERT INTO item_history 
+    #         (user_id, class_id, item_id, version, question_part, answer_part, format, difficulty, wrong_answer_explanation)
+    #         VALUES (:user_id, :class_id, :item_id, :version, :question_part, :answer_part, :format, :difficulty, :wrong_answer_explanation)"""
+    #     ),
+    #     {
+    #         "user_id": user_id,
+    #         "class_id": class_id,
+    #         "item_id": item_id,
+    #         "version": version,
+    #         "question_part": question,
+    #         "answer_part": answer_part,
+    #         "format": question_type,
+    #         "difficulty": difficulty,
+    #         "wrong_answer_explanation": wrong_answer_explanation,
+    #     },
+    # )
+
 
 def insert_item_topics(db_session, user_id, class_id, item_id, version, topic_id, topic_name):
     db_session.execute(
@@ -251,21 +254,7 @@ def select_topic_id(db_session, userid, classid):
     return topic_id
     
 
-def select_skill_id(db_session, userid, classid):
-    skill_id = db_session.execute(
-        text(
-            """
-            SELECT skill_id FROM item_skills
-            WHERE user_id = :user_id AND class_id = :class_id
-            ORDER BY skill_id DESC LIMIT 1
-        """
-        ),
-        {"user_id": userid, "class_id": classid},
-    ).fetchone()
-    
-    return skill_id
-
-def select_skill_id_from_item_skills(db_session, userid, classid):
+def fetch_highest_skill_id(db_session, userid, classid):
     
     db_session.execute(
         text(
@@ -279,7 +268,7 @@ def select_skill_id_from_item_skills(db_session, userid, classid):
     )
 
 def select_requirements(db_session, user_id, req_id):
-    db_session.execute(
+    result = db_session.execute(
         text(
             """
             SELECT content, question, answer, wrong_answer_explanation, topics, skills
@@ -290,18 +279,12 @@ def select_requirements(db_session, user_id, req_id):
         ),
         {"user_id": user_id, "class_id": req_id},
     )
+    return result 
     
-def add_to_database(user_id, class_id, test_id, questions, order_number=None):
-    """
-    Save structured questions into the database.
 
-    Args:
-        user_id (str): The user's ID.
-        class_id (str): The class ID.
-        test_id (str): The test ID for this batch of questions.
-        questions (list): List of questions with metadata.
-        order_number (int, optional): The desired order number for the new item(s).
-    """
+
+def add_to_database(user_id, class_id, test_id, questions, order_number=None):
+    
     conn = get_db_connection()
     cur = conn.cursor()
 

@@ -135,7 +135,7 @@ def generate_multiple_items():
 
     inserted_items = []
 
-    highest_topic_result = select_topic_id(db.session, userid, classid).fetchone()
+    highest_topic_result = select_topic_id(db.session, userid, classid)
 
     highest_skill_result = select_skill_id_from_item_skills(db.session, userid, classid).fetchone()
 
