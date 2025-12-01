@@ -252,7 +252,7 @@ def add_item():
                     ]
                 }
             ]
-            add_to_database(user_id, class_id, test_id, questions, order_number)
+            add_to_database(db.session, user_id, class_id, test_id, questions, order_number)
 
             return jsonify({
                 "message": "Item added successfully",

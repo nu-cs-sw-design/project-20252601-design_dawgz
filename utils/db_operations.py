@@ -507,9 +507,6 @@ def fetch_item_latest_version(db_session, user_id, class_id, item_id):
     
    
 def fetch_item_data(db_session, user_id, class_id, item_id, version):
-    # conn = get_db_connection()
-    # cur = conn.cursor()
-    
     try:
         # Get the item details from item_history
 

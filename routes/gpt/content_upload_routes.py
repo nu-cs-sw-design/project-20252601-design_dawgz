@@ -3,7 +3,6 @@ Filename: content_upload_routes.py
 Description: Routes for processing syllabus and PDF uploads.
 """
 
-from db_operations import insert_item_topics
 from flask import jsonify, request, make_response
 from .gpt_blueprint import gpt_bp
 from sqlalchemy import text
@@ -19,7 +18,16 @@ from io import BytesIO
 from pdf2image import convert_from_bytes
 from models import ExtractedQuestion
 from ...utils.class_info import get_class_info
-from ...utils.db_operations import fetch_next_order_number, fetch_highest_topic_id, insert_item_current, insert_item_history, select_unique_class, insert_item_skills, insert_tests, select_topic_id, select_skill_id
+from ...utils.db_operations import (
+    fetch_next_order_number, 
+    fetch_highest_topic_id,
+    fetch_highest_skill_id,
+    insert_item_current, 
+    insert_item_history, 
+    select_unique_class, 
+    insert_item_skills, 
+    insert_tests,
+    insert_item_topics)
 from ...utils.testconvert import normalize_pdf_images_to_summary
 from werkzeug.utils import secure_filename
 
@@ -160,7 +168,7 @@ def process_syllabus():
     highest_topic_result = fetch_highest_topic_id(db.session, userid, classid)
 
     # Select highest skill_id
-    highest_skill_result = select_skill_id(db.session, userid, classid)
+    highest_skill_result = fetch_highest_skill_id(db.session, userid, classid)
 
     def get_next_id(current_id, prefix):
         if not current_id:
@@ -424,10 +432,10 @@ def pdf_upload():
             return f"{prefix}_0"
 
     # Fetch highest topic ID
-    highest_topic_result = select_topic_id(db.session, userid, classid)
+    highest_topic_result = fetch_highest_topic_id(db.session, userid, classid)
 
     # Fetch highest skill ID
-    highest_skill_result = select_skill_id(db.session, userid, classid)
+    highest_skill_result = fetch_highest_skill_id(db.session, userid, classid)
 
     current_topic_id = get_next_id(
         highest_topic_result[0] if highest_topic_result else None, "topic"

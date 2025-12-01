@@ -17,8 +17,7 @@ from ...utils.class_info import get_class_info
 from ...utils.db_operations import (
     fetch_next_order_number, 
     fetch_highest_topic_id, 
-    select_skill_id, 
-    select_skill_id, 
+    fetch_highest_skill_id, 
     insert_tests, 
     select_unique_class, 
     insert_item_current, 
@@ -147,7 +146,7 @@ def generate_multiple_items():
 
     highest_topic_result = fetch_highest_topic_id(db.session, userid, classid)
 
-    highest_skill_result = select_skill_id(db.session, userid, classid)
+    highest_skill_result = fetch_highest_skill_id(db.session, userid, classid)
 
     def get_next_id(current_id, prefix):
         if not current_id:

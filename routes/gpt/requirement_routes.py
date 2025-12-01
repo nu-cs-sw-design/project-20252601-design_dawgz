@@ -109,7 +109,7 @@ def apply_requirements():
         latest_ver = fetch_item_latest_version(user_id, class_id, item_id)
 
         # Get item data
-        item_data = fetch_item_data(user_id, class_id, item_id, latest_ver)
+        item_data = fetch_item_data(db.session, user_id, class_id, item_id, latest_ver)
         item_format = item_data["format"]
 
         try:
@@ -293,8 +293,8 @@ def generate_requirement():
     prev_ver = latest_ver - 1 if latest_ver > 0 else 0
 
     # Fetch items from DB
-    latest_ver_item = fetch_item_data(user_id, class_id, item_id, latest_ver)
-    previous_ver_item = fetch_item_data(user_id, class_id, item_id, prev_ver)
+    latest_ver_item = fetch_item_data(db.session, user_id, class_id, item_id, latest_ver)
+    previous_ver_item = fetch_item_data(db.session, user_id, class_id, item_id, prev_ver)
 
     # Construct prompt for GPT
     prompt = config["prompts"]["requirement_template"].format(
