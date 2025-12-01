@@ -110,7 +110,6 @@ def fetch_highest_topic_id(db_session, user_id, class_id):
     return result
     
    
-
 def insert_item_current(db_session, user_id, class_id, item_id, version):
 
     try:
@@ -296,20 +295,6 @@ def select_unique_class(db_session, user_id, class_id):
 
     # else:
     #     return existing_class
-
-def fetch_highest_topic_id(db_session, userid, classid):
-
-    stmt = (
-        select(ItemTopics.topic_id)
-        .where(
-            ItemTopics.user_id == userid,
-            ItemTopics.class_id == classid,
-        )
-        .order_by(desc(ItemTopics.topic_id))
-        .limit(1)
-    )
-
-    return db_session.execute(stmt).scalar_one_or_none()
     
 
 def fetch_highest_skill_id(db_session, userid, classid):
@@ -521,40 +506,74 @@ def fetch_item_latest_version(db_session, user_id, class_id, item_id):
         raise Exception(f"Failed to fetch latest version: {e}")
     
    
-def fetch_item_data(user_id, class_id, item_id, version):
-    conn = get_db_connection()
-    cur = conn.cursor()
+def fetch_item_data(db_session, user_id, class_id, item_id, version):
+    # conn = get_db_connection()
+    # cur = conn.cursor()
     
     try:
         # Get the item details from item_history
-        cur.execute("""
-            SELECT question_part, answer_part, format, difficulty, wrong_answer_explanation 
-            FROM item_history
-            WHERE user_id = %s AND class_id = %s AND item_id = %s AND version = %s
-        """, (user_id, class_id, item_id, version))
-        item_data = cur.fetchone()
+
+        fetch_all_from_item_history = (
+        select(ItemHistory.question_part, ItemHistory.answer_part, ItemHistory.format, ItemHistory.difficulty, ItemHistory.wrong_answer_explanation)
+        .where(
+            ItemHistory.user_id == user_id,
+            ItemHistory.class_id == class_id,
+            ItemHistory.item_id == item_id, 
+            ItemHistory.version == version
+        )
+        )
+
+        item_data = db_session.execute(fetch_all_from_item_history).scalar_one_or_none()
+        
+        # cur.execute("""
+        #     SELECT question_part, answer_part, format, difficulty, wrong_answer_explanation 
+        #     FROM item_history
+        #     WHERE user_id = %s AND class_id = %s AND item_id = %s AND version = %s
+        # """, (user_id, class_id, item_id, version))
+        #item_data = cur.fetchone()
         
         if not item_data: raise Exception("Item not found in history.")
         
         # Get item topics from item_topics
-        cur.execute("""
-            SELECT topic_name 
-            FROM item_topics
-            WHERE user_id = %s AND class_id = %s AND item_id = %s AND version = %s
-        """, (user_id, class_id, item_id, version))
-        item_topics = cur.fetchall()
+        fetch_topic = (
+        select(ItemTopics.topic_name)
+        .where(
+            ItemTopics.user_id == user_id,
+            ItemTopics.class_id == class_id,
+            ItemTopics.item_id == item_id, 
+            ItemTopics.version == version
+        )
+        )
+        item_topics = db_session.execute(fetch_topic).scalar_one_or_none()
+
+        # cur.execute("""
+        #     SELECT topic_name 
+        #     FROM item_topics
+        #     WHERE user_id = %s AND class_id = %s AND item_id = %s AND version = %s
+        # """, (user_id, class_id, item_id, version))
+        # item_topics = cur.fetchall()
         
         item_topics = [topic[0] for topic in item_topics]
         
         # Get item skills form item_skills
-        cur.execute("""
-            SELECT skill_name
-            FROM item_skills
-            WHERE user_id = %s AND class_id = %s  AND item_id = %s AND version = %s
-        """, (user_id, class_id, item_id, version))
-        item_skills = cur.fetchall()
-        
+        stmt = (
+        select(ItemSkills.skill_name)
+        .where(
+            ItemSkills.user_id == user_id,
+            ItemSkills.class_id == class_id,
+            ItemSkills.version == version
+        )
+        )
+
+        item_skills = db_session.execute(stmt).scalar_one_or_none()
         item_skills = [skill[0] for skill in item_skills]
+
+         # cur.execute("""
+        #     SELECT skill_name
+        #     FROM item_skills
+        #     WHERE user_id = %s AND class_id = %s  AND item_id = %s AND version = %s
+        # """, (user_id, class_id, item_id, version))
+        # item_skills = cur.fetchall()
         
         # Populate item for return
         col_names = [
@@ -576,9 +595,9 @@ def fetch_item_data(user_id, class_id, item_id, version):
     except Exception as e:
         raise Exception(f"Failed to fetch item details: {e}")
     
-    finally:
-        cur.close()
-        conn.close()
+    # finally:
+    #     cur.close()
+    #     conn.close()
 
 def add_requirement_to_database(user_id, class_id, test_id, item_id, req_id, version, content, usage_count, application_count, contentType):
     """
