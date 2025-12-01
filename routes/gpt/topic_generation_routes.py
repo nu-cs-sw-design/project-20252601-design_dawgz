@@ -14,7 +14,17 @@ import uuid
 import yaml
 from models import ExtractedQuestion
 from ...utils.class_info import get_class_info 
-from ...utils.db_operations import fetch_next_order_number, select_topic_id, select_skill_id, select_skill_id_from_item_skills, insert_tests, select_unique_class, insert_item_current, insert_item_history, insert_item_topics, insert_item_skills
+from ...utils.db_operations import (
+    fetch_next_order_number, 
+    fetch_highest_topic_id, 
+    select_skill_id, 
+    select_skill_id, 
+    insert_tests, 
+    select_unique_class, 
+    insert_item_current, 
+    insert_item_history, 
+    insert_item_topics, 
+    insert_item_skills)
 
 
 @gpt_bp.route("/generate_multiple_items", methods=["POST", "OPTIONS"])
@@ -135,9 +145,9 @@ def generate_multiple_items():
 
     inserted_items = []
 
-    highest_topic_result = select_topic_id(db.session, userid, classid)
+    highest_topic_result = fetch_highest_topic_id(db.session, userid, classid)
 
-    highest_skill_result = select_skill_id_from_item_skills(db.session, userid, classid).fetchone()
+    highest_skill_result = select_skill_id(db.session, userid, classid)
 
     def get_next_id(current_id, prefix):
         if not current_id:
@@ -188,14 +198,14 @@ def generate_multiple_items():
             else:
                 answer_part = item_response.answer_part
 
-            
+            # Insert into item_current
             insert_item_current(db.session, userid, classid, item_id, version)
 
+            # Ensure the user_class is unique and doesn't already exist
             select_unique_class(db.session, userid, classid)
 
+            # Insert into item_history
             insert_item_history(db.session, userid, classid, item_id, version, question, answer_part, question_type, difficulty, wrong_answer_explanation)
-
-            
 
             # Get the appropriate order number
             if idx == 0 and order_number is not None:
@@ -207,9 +217,8 @@ def generate_multiple_items():
                     db.session, userid, classid, testid
                 )
 
-            
+            # Insert into tests
             insert_tests(db.session, userid, classid, testid, item_id, current_order)
-
             # db.session.execute(
             #     text(
             #         """INSERT INTO tests 
@@ -228,16 +237,14 @@ def generate_multiple_items():
             for topic_name in item_response.relatedtopics:
                 topic_id = get_next_id(current_topic_id, "topic")
                 current_topic_id = topic_id
-
-                insert_item_topics(userid, classid, item_id, version, topic_id, topic_name)
-
-                
+                # Insert into item_topics
+                insert_item_topics(db.session, userid, classid, item_id, version, topic_id, topic_name)
 
             for skill_name in item_response.relatedskills:
                 skill_id = get_next_id(current_skill_id, "skill")
                 current_skill_id = skill_id
-
-                insert_item_skills(userid, classid, item_id, version, skill_id, skill_name)
+                # Insert into item_skills
+                insert_item_skills(db.session, userid, classid, item_id, version, skill_id, skill_name)
                 
 
             inserted_items.append(
@@ -267,4 +274,3 @@ def generate_multiple_items():
         db.session.rollback()
         print(f"Error inserting questions: {str(e)}")
         return jsonify({"error": "Failed to insert questions", "detail": str(e)}), 500
-

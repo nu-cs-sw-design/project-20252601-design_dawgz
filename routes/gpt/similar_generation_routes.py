@@ -15,8 +15,8 @@ import yaml
 from models import MultipleChoiceItem, FreeResponseItem, ExtractedQuestion
 from ...utils.db_operations import (
     fetch_next_order_number, 
+    fetch_highest_topic_id,
     select_skill_id, 
-    select_topic_id, 
     select_unique_class, 
     insert_item_current, 
     insert_item_history, 
@@ -75,7 +75,7 @@ def generate_similar():
         description = ""
 
     # Get the highest existing topic_id and skill_id
-    highest_topic_result = select_topic_id(db.session, userid, classid).fetchone()
+    highest_topic_result = fetch_highest_topic_id(db.session, userid, classid)
     # query_highest_topic = text(
     #     """
     #     SELECT topic_id FROM item_topics 
@@ -87,7 +87,7 @@ def generate_similar():
     #     query_highest_topic, {"user_id": userid, "class_id": classid}
     # ).fetchone()
 
-    highest_skill_result = select_skill_id(db.session, userid, classid).fetchone()
+    highest_skill_result = select_skill_id(db.session, userid, classid)
     # query_highest_skill = text(
     #     """
     #     SELECT skill_id FROM item_skills 
@@ -233,6 +233,7 @@ def generate_similar():
                     userid,
                     classid,
                     item_id,
+                    0,
                     question,
                     answer_part,
                     question_format,

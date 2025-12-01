@@ -63,10 +63,8 @@ def apply_requirements():
     requirements_dict = {}
 
     for req_id in req_ids:
-
-        #SQL
-
-        result = select_requirements(db.session, user_id, req_id).fetchone()
+        # Find requrirement in database
+        result = select_requirements(db.session, user_id, req_id)
 
         if not result:
             return jsonify({"message": f"Requirement {req_id} not found"}), 404
