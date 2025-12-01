@@ -61,7 +61,7 @@ def modify_item():
     classid = data.get("classid")
     testid = data.get("testid")
     itemid = data.get("itemid")
-    version = fetch_item_latest_version(userid, classid, itemid)
+    version = fetch_item_latest_version(db.session, userid, classid, itemid)
     modification = data.get("modification")
     format = data.get("format")
 
@@ -106,25 +106,6 @@ def modify_item():
     try:
         # Find item in item_history
         item = fetch_item_data(db.session, userid, classid, itemid, version)
-        # query = text(
-        #     """
-        #     SELECT question_part, answer_part, format, difficulty, wrong_answer_explanation
-        #     FROM item_history
-        #     WHERE user_id = :user_id AND class_id = :class_id AND item_id = :item_id AND version = :version
-        #     """
-        # )
-        # query_result = db.session.execute(
-        #     query,
-        #     {
-        #         "user_id": userid,
-        #         "class_id": classid,
-        #         "item_id": itemid,
-        #         "version": version,
-        #     },
-        # ).fetchall()
-
-        # if not query_result:
-        #     return jsonify({"message": "Item not found in item_history table"}), 404
 
         col_names = [
             "question_part",
@@ -204,16 +185,7 @@ def modify_item():
         relatedtopics = item_response.relatedtopics
         relatedskills = item_response.relatedskills
 
-        # Set the next version to be the highest version existing + 1
-        # query = text(
-        #     """
-        #     SELECT MAX(version) AS highest_version
-        #     FROM item_history
-        #     WHERE item_id = :item_id
-        # """
-        # )
-        # result = db.session.execute(query, {"item_id": itemid}).fetchone()
-        result = fetch_item_latest_version(userid, classid, itemid)
+        result = fetch_item_latest_version(db.session, userid, classid, itemid)
         highest_version = result + 1
 
         modify_item = {
@@ -314,7 +286,7 @@ def edit_item_component():
         editedComponent = editedComponent_response.editedComponent
 
         # Get current item data from DB
-        current_version = fetch_item_latest_version(userId, classId, itemId)
+        current_version = fetch_item_latest_version(db.session, userId, classId, itemId)
 
         # Add user prompt as a new requirement
         requirement_id = f"{userId.replace(' ', '')}_{classId.replace(' ', '')}_{testId.replace(' ', '')}_{itemId.replace(' ', '')}_{str(uuid.uuid4())[:12]}"

@@ -166,7 +166,6 @@ def process_syllabus():
 
     # Select highest topic_id
     highest_topic_result = fetch_highest_topic_id(db.session, userid, classid)
-
     # Select highest skill_id
     highest_skill_result = fetch_highest_skill_id(db.session, userid, classid)
 
@@ -183,7 +182,7 @@ def process_syllabus():
         highest_topic_result, "topic"
     )
     current_skill_id = get_next_id(
-        highest_skill_result[0] if highest_skill_result else None, "skill"
+        highest_skill_result if highest_skill_result else None, "skill"
     )
 
     version = 0
@@ -217,20 +216,8 @@ def process_syllabus():
             # Insert into item_current
             insert_item_current(db.session, userid, classid, item_id, version)
 
+            # Check if class is unique and insert if does not exist
             select_unique_class(db.session, userid, classid)
-            # existing_class = db.session.execute(
-            #     text(
-            #         "SELECT 1 FROM user_classes WHERE user_id = :user_id AND class_id = :class_id"
-            #     ),
-            #     {"user_id": user_id, "class_id": class_id},
-            # ).fetchone()
-            # if not existing_class:
-            #     db.session.execute(
-            #         text(
-            #             "INSERT INTO user_classes (user_id, class_id) VALUES (:user_id, :class_id)"
-            #         ),
-            #         {"user_id": user_id, "class_id": class_id},
-            #     )
 
             # Insert into item_history
             insert_item_history(db.session, userid, classid, item_id, version, question, answer_part, question_type, difficulty, wrong_answer_explanation)
@@ -245,62 +232,19 @@ def process_syllabus():
                 )
 
             # Insert into tests
-            insert_tests(db.session, userid, classid, test_id, item_id, order_number)
-            # db.session.execute(
-            #     text(
-            #         """INSERT INTO tests 
-            #         (user_id, class_id, test_id, item_id, order_number)
-            #         VALUES (:user_id, :class_id, :test_id, :item_id, :order_number)"""
-            #     ),
-            #     {
-            #         "user_id": user_id,
-            #         "class_id": class_id,
-            #         "test_id": test_id,
-            #         "item_id": item_id,
-            #         "order_number": current_order,
-            #     },
-            # )
+            insert_tests(db.session, userid, classid, test_id, item_id, current_order)
 
             # Insert into item_topics
             for topic_name in item_response.relatedtopics:
                 topic_id = get_next_id(current_topic_id, "topic")
                 current_topic_id = topic_id
-                # db.session.execute(
-                #     text(
-                #         """INSERT INTO item_topics 
-                #         (user_id, class_id, item_id, version, topic_id, topic_name)
-                #         VALUES (:user_id, :class_id, :item_id, :version, :topic_id, :topic_name)"""
-                #     ),
-                #     {
-                #         "user_id": user_id,
-                #         "class_id": class_id,
-                #         "item_id": item_id,
-                #         "version": version,
-                #         "topic_id": topic_id,
-                #         "topic_name": topic_name,
-                #     },
-                # )
+                insert_item_topics(db.session, userid, classid, item_id, version, topic_id, topic_name)
 
             # Insert into item_skills
             for skill_name in item_response.relatedskills:
                 skill_id = get_next_id(current_skill_id, "skill")
                 current_skill_id = skill_id
                 insert_item_skills(db.session, userid, classid, item_id, version, skill_id, skill_name)
-                # db.session.execute(
-                #     text(
-                #         """INSERT INTO item_skills 
-                #         (user_id, class_id, item_id, version, skill_id, skill_name)
-                #         VALUES (:user_id, :class_id, :item_id, :version, :skill_id, :skill_name)"""
-                #     ),
-                #     {
-                #         "user_id": user_id,
-                #         "class_id": class_id,
-                #         "item_id": item_id,
-                #         "version": version,
-                #         "skill_id": skill_id,
-                #         "skill_name": skill_name,
-                #     },
-                # )
 
             inserted_items.append(
                 {
@@ -433,15 +377,14 @@ def pdf_upload():
 
     # Fetch highest topic ID
     highest_topic_result = fetch_highest_topic_id(db.session, userid, classid)
-
     # Fetch highest skill ID
     highest_skill_result = fetch_highest_skill_id(db.session, userid, classid)
 
     current_topic_id = get_next_id(
-        highest_topic_result[0] if highest_topic_result else None, "topic"
+        highest_topic_result if highest_topic_result else None, "topic"
     )
     current_skill_id = get_next_id(
-        highest_skill_result[0] if highest_skill_result else None, "skill"
+        highest_skill_result if highest_skill_result else None, "skill"
     )
     version = 0
 
@@ -472,64 +415,12 @@ def pdf_upload():
 
         try:
             select_unique_class(db.session, userid, classid)
-            # existing_class = db.session.execute(
-            #     text(
-            #         "SELECT 1 FROM user_classes WHERE user_id = :user_id AND class_id = :class_id"
-            #     ),
-            #     {"user_id": userid, "class_id": classid},
-            # ).fetchone()
-
-
-            # if not existing_class:
-            #     db.session.execute(
-            #         text(
-            #             "INSERT INTO user_classes (user_id, class_id) VALUES (:user_id, :class_id)"
-            #         ),
-            #         {"user_id": userid, "class_id": classid},
-            #     )
-                
-          
+       
             # Insert into item_current
             insert_item_current(db.session, userid, classid, item_id, version)
-            # db.session.execute(
-            #     text(
-            #         """
-            #     INSERT INTO item_current (user_id, class_id, item_id, version)
-            #     VALUES (:user_id, :class_id, :item_id, :version)
-            # """
-            #     ),
-            #     {
-            #         "user_id": userid,
-            #         "class_id": classid,
-            #         "item_id": item_id,
-            #         "version": version,
-            #     },
-            # )
-
-            
 
             # Insert into item_history
             insert_item_history(db.session, userid, classid, item_id, version, question, answer_part, question_type, difficulty, wrong_answer_explanation)
-            # db.session.execute(
-            #     text(
-            #         """
-            #     INSERT INTO item_history
-            #     (user_id, class_id, item_id, version, question_part, answer_part, format, difficulty, wrong_answer_explanation)
-            #     VALUES (:user_id, :class_id, :item_id, :version, :question_part, :answer_part, :format, :difficulty, :explanation)
-            # """
-            #     ),
-            #     {
-            #         "user_id": userid,
-            #         "class_id": classid,
-            #         "item_id": item_id,
-            #         "version": version,
-            #         "question_part": question,
-            #         "answer_part": answer_part,
-            #         "format": question_type,
-            #         "difficulty": difficulty,
-            #         "explanation": wrong_answer_explanation,
-            #     },
-            # )
 
             if i == 0 and order_number is not None:
                 current_order = order_number
@@ -542,65 +433,18 @@ def pdf_upload():
 
             # Insert into tests
             insert_tests(db.session, userid, classid, test_id, item_id, current_order)
-            # db.session.execute(
-            #     text(
-            #         """
-            #     INSERT INTO tests (user_id, class_id, test_id, item_id, order_number)
-            #     VALUES (:user_id, :class_id, :testid, :item_id, :order_number)
-            # """
-            #     ),
-            #     {
-            #         "user_id": userid,
-            #         "class_id": classid,
-            #         "testid": test_id,
-            #         "item_id": item_id,
-            #         "order_number": current_order,
-            #     },
-            # )
 
             # Insert into item_topics
             for topic_name in item.relatedtopics:
                 topic_id = get_next_id(current_topic_id, "topic")
                 current_topic_id = topic_id
                 insert_item_topics(db.session, userid, classid, item_id, version, topic_id, topic_name)
-                # db.session.execute(
-                #     text(
-                #         """
-                #     INSERT INTO item_topics (user_id, class_id, item_id, version, topic_id, topic_name)
-                #     VALUES (:user_id, :class_id, :item_id, :version, :topic_id, :topic_name)
-                # """
-                #     ),
-                #     {
-                #         "user_id": userid,
-                #         "class_id": classid,
-                #         "item_id": item_id,
-                #         "version": version,
-                #         "topic_id": topic_id,
-                #         "topic_name": topic_name,
-                #     },
-                # )
 
             # Insert into item_skills
             for skill_name in item.relatedskills:
                 skill_id = get_next_id(current_skill_id, "skill")
                 current_skill_id = skill_id
                 insert_item_skills(db.session, userid, classid, item_id, version, skill_id, skill_name)
-                # db.session.execute(
-                #     text(
-                #         """
-                #     INSERT INTO item_skills (user_id, class_id, item_id, version, skill_id, skill_name)
-                #     VALUES (:user_id, :class_id, :item_id, :version, :skill_id, :skill_name)
-                # """
-                #     ),
-                #     {
-                #         "user_id": userid,
-                #         "class_id": classid,
-                #         "item_id": item_id,
-                #         "version": version,
-                #         "skill_id": skill_id,
-                #         "skill_name": skill_name,
-                #     },
-                # )
 
             db.session.commit()
 

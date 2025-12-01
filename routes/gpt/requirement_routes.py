@@ -106,7 +106,7 @@ def apply_requirements():
     # Step 3: Iterate through each item and apply requirements to their corresponding tags
     for item_id in item_ids:
         # Get latest verison of item
-        latest_ver = fetch_item_latest_version(user_id, class_id, item_id)
+        latest_ver = fetch_item_latest_version(db.session, user_id, class_id, item_id)
 
         # Get item data
         item_data = fetch_item_data(db.session, user_id, class_id, item_id, latest_ver)
@@ -287,7 +287,7 @@ def generate_requirement():
     contentType = data.get("contentType")  # tags
 
     # Get latest version of item
-    latest_ver = fetch_item_latest_version(user_id, class_id, item_id)
+    latest_ver = fetch_item_latest_version(db.session, user_id, class_id, item_id)
 
     # Previous version of item
     prev_ver = latest_ver - 1 if latest_ver > 0 else 0

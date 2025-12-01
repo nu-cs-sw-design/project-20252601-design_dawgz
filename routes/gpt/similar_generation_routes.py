@@ -76,28 +76,7 @@ def generate_similar():
 
     # Get the highest existing topic_id and skill_id
     highest_topic_result = fetch_highest_topic_id(db.session, userid, classid)
-    # query_highest_topic = text(
-    #     """
-    #     SELECT topic_id FROM item_topics 
-    #     WHERE user_id = :user_id AND class_id = :class_id
-    #     ORDER BY topic_id DESC LIMIT 1
-    # """
-    # )
-    # highest_topic_result = db.session.execute(
-    #     query_highest_topic, {"user_id": userid, "class_id": classid}
-    # ).fetchone()
-
     highest_skill_result = fetch_highest_skill_id(db.session, userid, classid)
-    # query_highest_skill = text(
-    #     """
-    #     SELECT skill_id FROM item_skills 
-    #     WHERE user_id = :user_id AND class_id = :class_id
-    #     ORDER BY skill_id DESC LIMIT 1
-    # """
-    # )
-    # highest_skill_result = db.session.execute(
-    #     query_highest_skill, {"user_id": userid, "class_id": classid}
-    # ).fetchone()
 
     def get_next_id(current_id, prefix):
         if not current_id:
@@ -109,10 +88,10 @@ def generate_similar():
             return f"{prefix}_0"
 
     current_topic_id = get_next_id(
-        highest_topic_result[0] if highest_topic_result else None, "topic"
+        highest_topic_result if highest_topic_result else None, "topic"
     )
     current_skill_id = get_next_id(
-        highest_skill_result[0] if highest_skill_result else None, "skill"
+        highest_skill_result if highest_skill_result else None, "skill"
     )
 
     # Choose the proper prompt template based on question type
@@ -201,31 +180,9 @@ def generate_similar():
             try:
                 # Insert into item_current
                 insert_item_current(db.session, userid, classid, item_id, 0)
-                # db.session.execute(
-                #     text(
-                #         """
-                #         INSERT INTO item_current (user_id, class_id, item_id, version)
-                #         VALUES (:user_id, :class_id, :item_id, 0)
-                #     """
-                #     ),
-                #     {"user_id": userid, "class_id": classid, "item_id": item_id},
-                # )
 
                 # Ensure the user_class exists
                 select_unique_class(db.session, userid, classid)
-                # existing_class = db.session.execute(
-                #     text(
-                #         "SELECT 1 FROM user_classes WHERE user_id = :user_id AND class_id = :class_id"
-                #     ),
-                #     {"user_id": userid, "class_id": classid},
-                # ).fetchone()
-                # if not existing_class:
-                #     db.session.execute(
-                #         text(
-                #             "INSERT INTO user_classes (user_id, class_id) VALUES (:user_id, :class_id)"
-                #         ),
-                #         {"user_id": userid, "class_id": classid},
-                #     )
 
                 # Insert into item_history
                 insert_item_history(
@@ -240,26 +197,6 @@ def generate_similar():
                     difficulty,
                     wrong_answer_explanation,
                 )
-                # db.session.execute(
-                #     text(
-                #         """
-                #         INSERT INTO item_history 
-                #         (user_id, class_id, item_id, version, question_part, answer_part, format, difficulty, wrong_answer_explanation)
-                #         VALUES 
-                #         (:user_id, :class_id, :item_id, 0, :question_part, :answer_part, :format, :difficulty, :wrong_answer_explanation)
-                #     """
-                #     ),
-                #     {
-                #         "user_id": userid,
-                #         "class_id": classid,
-                #         "item_id": item_id,
-                #         "question_part": question,
-                #         "answer_part": answer_part,
-                #         "format": question_format,
-                #         "difficulty": difficulty,
-                #         "wrong_answer_explanation": wrong_answer_explanation,
-                #     },
-                # )
 
                 # Get the appropriate order number
                 if i == 0 and order_number is not None:
@@ -273,67 +210,16 @@ def generate_similar():
 
                 # Insert into tests
                 insert_tests(db.session, userid, classid, testid, item_id, current_order)
-                # db.session.execute(
-                #     text(
-                #         """
-                #         INSERT INTO tests 
-                #         (user_id, class_id, test_id, item_id, order_number)
-                #         VALUES 
-                #         (:user_id, :class_id, :testid, :item_id, :order_number)
-                #     """
-                #     ),
-                #     {
-                #         "user_id": userid,
-                #         "class_id": classid,
-                #         "testid": testid,
-                #         "item_id": item_id,
-                #         "order_number": current_order,
-                #     },
-                # )
 
                 # Insert into item_topics
                 for topic in topics:
                     current_topic_id = get_next_id(current_topic_id, "topic")
                     insert_item_topics(db.session, userid, classid, item_id, 0, current_topic_id, topic)
-                    # db.session.execute(
-                    #     text(
-                    #         """
-                    #         INSERT INTO item_topics 
-                    #         (user_id, class_id, item_id, version, topic_id, topic_name)
-                    #         VALUES 
-                    #         (:user_id, :class_id, :item_id, 0, :topic_id, :topic_name)
-                    #     """
-                    #     ),
-                    #     {
-                    #         "user_id": userid,
-                    #         "class_id": classid,
-                    #         "item_id": item_id,
-                    #         "topic_id": current_topic_id,
-                    #         "topic_name": topic,
-                    #     },
-                    # )
 
                 # Insert into item_skills
                 for skill in skills:
                     current_skill_id = get_next_id(current_skill_id, "skill")
                     insert_item_skills(db.session, userid, classid, item_id, 0, current_skill_id, skill)
-                    # db.session.execute(
-                    #     text(
-                    #         """
-                    #         INSERT INTO item_skills 
-                    #         (user_id, class_id, item_id, version, skill_id, skill_name)
-                    #         VALUES 
-                    #         (:user_id, :class_id, :item_id, 0, :skill_id, :skill_name)
-                    #     """
-                    #     ),
-                    #     {
-                    #         "user_id": userid,
-                    #         "class_id": classid,
-                    #         "item_id": item_id,
-                    #         "skill_id": current_skill_id,
-                    #         "skill_name": skill,
-                    #     },
-                    # )
 
                 db.session.commit()
             except Exception as db_e:

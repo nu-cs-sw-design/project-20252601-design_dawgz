@@ -8,7 +8,7 @@ import uuid
 from flask import make_response
 from .db_blueprint import db_bp
 from app.utils.db_operations import add_to_database, fetch_item_data, fetch_item_latest_version
-from .table_models import (
+from ....utils.table_models import (
     Tests,
     ItemCurrent,
     ItemHistory,

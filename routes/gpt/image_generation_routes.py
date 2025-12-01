@@ -138,8 +138,8 @@ def generate_from_image():
             continue
 
     inserted_items = []
+    
     highest_topic_result = fetch_highest_topic_id(db.session, userid, classid)
-
     highest_skill_result = fetch_highest_skill_id(db.session, userid, classid)
 
     def get_next_id(current_id, prefix):
@@ -152,10 +152,10 @@ def generate_from_image():
             return f"{prefix}_0"
 
     current_topic_id = get_next_id(
-        highest_topic_result[0] if highest_topic_result else None, "topic"
+        highest_topic_result if highest_topic_result else None, "topic"
     )
     current_skill_id = get_next_id(
-        highest_skill_result[0] if highest_skill_result else None, "skill"
+        highest_skill_result if highest_skill_result else None, "skill"
     )
 
     version = 0
@@ -196,33 +196,8 @@ def generate_from_image():
                 version,
             )
 
-            # db.session.execute(
-            #     text(
-            #         "INSERT INTO item_current (user_id, class_id, item_id, version) VALUES (:user_id, :class_id, :item_id, :version)"
-            #     ),
-            #     {
-            #         "user_id": userid,
-            #         "class_id": classid,
-            #         "item_id": item_id,
-            #         "version": version,
-            #     },
-            # )
-
             # Check if class exists, if not, insert it
             select_unique_class(db.session, userid, classid)
-            # existing_class = db.session.execute(
-            #     text(
-            #         "SELECT 1 FROM user_classes WHERE user_id = :user_id AND class_id = :class_id"
-            #     ),
-            #     {"user_id": userid, "class_id": classid},
-            # ).fetchone()
-            # if not existing_class:
-                # db.session.execute(
-                #     text(
-                #         "INSERT INTO user_classes (user_id, class_id) VALUES (:user_id, :class_id)"
-                #     ),
-                #     {"user_id": userid, "class_id": classid},
-                # )
 
             # Insert into item_history
             insert_item_history(
@@ -237,24 +212,6 @@ def generate_from_image():
                 difficulty,
                 wrong_answer_explanation,
             )
-            # db.session.execute(
-            #     text(
-            #         """INSERT INTO item_history 
-            #         (user_id, class_id, item_id, version, question_part, answer_part, format, difficulty, wrong_answer_explanation)
-            #         VALUES (:user_id, :class_id, :item_id, :version, :question_part, :answer_part, :format, :difficulty, :wrong_answer_explanation)"""
-            #     ),
-            #     {
-            #         "user_id": userid,
-            #         "class_id": classid,
-            #         "item_id": item_id,
-            #         "version": version,
-            #         "question_part": question,
-            #         "answer_part": answer_part,
-            #         "format": question_type,
-            #         "difficulty": difficulty,
-            #         "wrong_answer_explanation": wrong_answer_explanation,
-            #     },
-            # )
 
             if idx == 0 and order_number is not None:
                 current_order = order_number
@@ -267,21 +224,6 @@ def generate_from_image():
                 
             # Insert into tests
             insert_tests(db.session, userid, classid, test_id, item_id, current_order)
-
-            # db.session.execute(
-            #     text(
-            #         """INSERT INTO tests 
-            #         (user_id, class_id, test_id, item_id, order_number)
-            #         VALUES (:user_id, :class_id, :test_id, :item_id, :order_number)"""
-            #     ),
-            #     {
-            #         "user_id": userid,
-            #         "class_id": classid,
-            #         "test_id": test_id,
-            #         "item_id": item_id,
-            #         "order_number": current_order,
-            #     },
-            # )
 
             for topic_name in item_response.relatedtopics:
                 topic_id = get_next_id(current_topic_id, "topic")
@@ -296,21 +238,6 @@ def generate_from_image():
                     topic_id,
                     topic_name,
                 )
-                # db.session.execute(
-                #     text(
-                #         """INSERT INTO item_topics 
-                #         (user_id, class_id, item_id, version, topic_id, topic_name)
-                #         VALUES (:user_id, :class_id, :item_id, :version, :topic_id, :topic_name)"""
-                #     ),
-                #     {
-                #         "user_id": userid,
-                #         "class_id": classid,
-                #         "item_id": item_id,
-                #         "version": version,
-                #         "topic_id": topic_id,
-                #         "topic_name": topic_name,
-                #     },
-                # )
 
             for skill_name in item_response.relatedskills:
                 skill_id = get_next_id(current_skill_id, "skill")
@@ -324,21 +251,6 @@ def generate_from_image():
                     skill_id,
                     skill_name,
                 )
-                # db.session.execute(
-                #     text(
-                #         """INSERT INTO item_skills 
-                #         (user_id, class_id, item_id, version, skill_id, skill_name)
-                #         VALUES (:user_id, :class_id, :item_id, :version, :skill_id, :skill_name)"""
-                #     ),
-                #     {
-                #         "user_id": userid,
-                #         "class_id": classid,
-                #         "item_id": item_id,
-                #         "version": version,
-                #         "skill_id": skill_id,
-                #         "skill_name": skill_name,
-                #     },
-                # )
 
             inserted_items.append(
                 {
