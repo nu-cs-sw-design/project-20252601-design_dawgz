@@ -105,7 +105,7 @@ def modify_item():
 
     try:
         # Find item in item_history
-        item = fetch_item_data(userid, classid, itemid, version)
+        item = fetch_item_data(db.session, userid, classid, itemid, version)
         # query = text(
         #     """
         #     SELECT question_part, answer_part, format, difficulty, wrong_answer_explanation

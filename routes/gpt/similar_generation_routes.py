@@ -16,7 +16,7 @@ from models import MultipleChoiceItem, FreeResponseItem, ExtractedQuestion
 from ...utils.db_operations import (
     fetch_next_order_number, 
     fetch_highest_topic_id,
-    select_skill_id, 
+    fetch_highest_skill_id, 
     select_unique_class, 
     insert_item_current, 
     insert_item_history, 
@@ -87,7 +87,7 @@ def generate_similar():
     #     query_highest_topic, {"user_id": userid, "class_id": classid}
     # ).fetchone()
 
-    highest_skill_result = select_skill_id(db.session, userid, classid)
+    highest_skill_result = fetch_highest_skill_id(db.session, userid, classid)
     # query_highest_skill = text(
     #     """
     #     SELECT skill_id FROM item_skills 

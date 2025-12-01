@@ -7,7 +7,7 @@ import json
 import sqlalchemy
 #orm library is sqlalchemy
 from sqlalchemy import text
-from sqlalchemy.orm import Session, ForeignKey, String, DeclarativeBase, Mapped, mapped_column, relationship, select, desc
+from sqlalchemy.orm import Session, ForeignKey, String, DeclarativeBase, Mapped, mapped_column, relationship, select, desc, update, func
 
 
 from .table_models import (
@@ -17,7 +17,8 @@ from .table_models import (
     ItemTopics,
     ItemSkills,
     Requirements,
-    UserClasses
+    UserClasses,
+    UserTests
 )
 
 
@@ -46,52 +47,74 @@ def fetch_next_order_number(db_session, user_id, class_id, test_id, desired_orde
     """
     if desired_order is not None:
         if isinstance(db_session, psycopg2.extensions.cursor):
-            db_session.execute("""
-                UPDATE tests
-                SET order_number = order_number + %s
-                WHERE user_id = %s AND class_id = %s AND test_id = %s
-                AND order_number >= %s
-            """, (num_items, user_id, class_id, test_id, desired_order))
-            return desired_order
-        else:
             db_session.execute(
-                text("""
-                    UPDATE tests
-                    SET order_number = order_number + :num_items
-                    WHERE user_id = :user_id AND class_id = :class_id AND test_id = :test_id
-                    AND order_number >= :order_number
-                """),
-                {
-                    "user_id": user_id,
-                    "class_id": class_id,
-                    "test_id": test_id,
-                    "order_number": desired_order,
-                    "num_items": num_items
-                }
+            update(Tests)
+            .where(
+                Tests.user_id == user_id,
+                Tests.class_id == class_id,
+                Tests.test_id == test_id,
+                Tests.order_number >= desired_order
             )
+            .values(order_number=Tests.order_number + num_items)
+        )
+
+            db_session.commit()
+            return desired_order
+            # db_session.execute("""
+            #     UPDATE tests
+            #     SET order_number = order_number + %s
+            #     WHERE user_id = %s AND class_id = %s AND test_id = %s
+            #     AND order_number >= %s
+            # """, (num_items, user_id, class_id, test_id, desired_order))
+            # return desired_order
+        else:
+            
+            db_session.execute(
+                update(Tests)
+                .where(
+                    Tests.user_id == user_id,
+                    Tests.class_id == class_id,
+                    Tests.test_id == test_id,
+                    Tests.order_number >= desired_order
+                )
+                .values(order_number=Tests.order_number + num_items)
+            )
+
+            db_session.commit()
             return desired_order
     
-    if isinstance(db_session, psycopg2.extensions.cursor):
-        db_session.execute("""
-            SELECT COALESCE(MAX(order_number), 0) FROM tests
-            WHERE user_id = %s AND class_id = %s AND test_id = %s
-        """, (user_id, class_id, test_id))
-        max_order = db_session.fetchone()[0]
-    else:
-        result = db_session.execute(
-            text("""
-                SELECT COALESCE(MAX(order_number), 0) FROM tests
-                WHERE user_id = :user_id AND class_id = :class_id AND test_id = :test_id
-            """),
-            {
-                "user_id": user_id,
-                "class_id": class_id,
-                "test_id": test_id
-            }
-        ).scalar()
-        max_order = result
-    
+    max_order = (
+        db_session.query(func.coalesce(func.max(Test.order_number), 0))
+        .filter(
+            Tests.user_id == user_id,
+            Tests.class_id == class_id,
+            Tests.test_id == test_id
+        )
+        .scalar()
+    )
+
     return max_order + 1
+    # if isinstance(db_session, psycopg2.extensions.cursor):
+    #     db_session.execute("""
+    #         SELECT COALESCE(MAX(order_number), 0) FROM tests
+    #         WHERE user_id = %s AND class_id = %s AND test_id = %s
+    #     """, (user_id, class_id, test_id))
+    #     max_order = db_session.fetchone()[0]
+    # else:
+    #     result = db_session.execute(
+    #         text("""
+    #             SELECT COALESCE(MAX(order_number), 0) FROM tests
+    #             WHERE user_id = :user_id AND class_id = :class_id AND test_id = :test_id
+    #         """),
+    #         {
+    #             "user_id": user_id,
+    #             "class_id": class_id,
+    #             "test_id": test_id
+    #         }
+    #     ).scalar()
+    #     max_order = result
+    
+    # return max_order + 1
 
 def fetch_highest_topic_id(db_session, user_id, class_id):
 
@@ -508,9 +531,6 @@ def fetch_item_latest_version(db_session, user_id, class_id, item_id):
     
    
 def fetch_item_data(db_session, user_id, class_id, item_id, version):
-    # conn = get_db_connection()
-    # cur = conn.cursor()
-    
     try:
         # Get the item details from item_history
 
@@ -619,44 +639,76 @@ def add_requirement_to_database(db_session, user_id, class_id, test_id, item_id,
     Returns:
         None
     """
+
     required_keys = ["question", "answer", "wrongAnswerExplanation", "topics", "skills"]
     flags = [contentType.get(key, False) for key in required_keys]
 
-    query = """
-        INSERT INTO requirements (
-            user_id, class_id, test_id, item_id, req_id, version, 
-            content, usage_count, application_count, 
-            question, answer, wrong_answer_explanation, topics, skills
-        )
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-    """
-
-    values = (user_id, class_id, test_id, item_id, req_id, version, content,
-              usage_count, application_count, *flags)
-    
     try:
-        with get_db_connection() as conn:
-            with conn.cursor() as cur:
-                cur.execute(query, values)
-                conn.commit()
+        # db_session should be a SQLAlchemy session (Session instance)
+        requirement = Requirements(
+            user_id=user_id,
+            class_id=class_id,
+            test_id=test_id,
+            item_id=item_id,
+            req_id=req_id,
+            version=version,
+            content=content,
+            usage_count=usage_count,
+            application_count=application_count,
+            question=flags[0],
+            answer=flags[1],
+            wrong_answer_explanation=flags[2],
+            topics=flags[3],
+            skills=flags[4],
+        )
+
+        db_session.add(requirement)
+        db_session.commit()
+
+        return requirement
+
     except Exception as e:
+        db_session.rollback()
         raise Exception(f"Failed to add requirement: {e}")
+    # required_keys = ["question", "answer", "wrongAnswerExplanation", "topics", "skills"]
+    # flags = [contentType.get(key, False) for key in required_keys]
+
+    # query = """
+    #     INSERT INTO requirements (
+    #         user_id, class_id, test_id, item_id, req_id, version, 
+    #         content, usage_count, application_count, 
+    #         question, answer, wrong_answer_explanation, topics, skills
+    #     )
+    #     VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+    # """
+
+    # values = (user_id, class_id, test_id, item_id, req_id, version, content,
+    #           usage_count, application_count, *flags)
+    
+    # try:
+    #     with get_db_connection() as conn:
+    #         with conn.cursor() as cur:
+    #             cur.execute(query, values)
+    #             conn.commit()
+    # except Exception as e:
+    #     raise Exception(f"Failed to add requirement: {e}")
 
 def generate_unique_test_id(base_name, user_id, class_id):
-    conn = get_db_connection()
-    cur = conn.cursor()
-
     i = 1
     new_id = f"copy of {base_name}"
+
     while True:
-        cur.execute("""
-            SELECT 1 FROM user_tests WHERE user_id = %s AND class_id = %s AND test_id = %s
-        """, (user_id, class_id, new_id))
+        exists = (
+            db_session.query(UserTests)
+            .filter(
+                UserTests.user_id == user_id,
+                UserTests.class_id == class_id,
+                UserTests.test_id == new_id
+            )
+            .first()
+        )
 
-        existing = cur.fetchone()
-
-
-        if not existing:
+        if not exists:
             return new_id
 
         i += 1
