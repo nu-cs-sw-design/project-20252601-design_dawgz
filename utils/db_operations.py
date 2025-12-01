@@ -16,6 +16,8 @@ from .table_models import (
     ItemHistory,
     ItemTopics,
     ItemSkills,
+    Requirements,
+    UserClasses
 )
 
 
@@ -109,48 +111,46 @@ def fetch_highest_topic_id(db_session, user_id, class_id):
     
    
 
-
 def insert_item_current(db_session, user_id, class_id, item_id, version):
 
-    new_item = ItemCurrent(
-        user_id = user_id,
-        class_id = class_id, 
-        item_id = item_id, 
-        version = version
-    )
+    try:
+        curr_item = ItemCurrent(
+            user_id = user_id,
+            class_id = class_id, 
+            item_id = item_id, 
+            version = version
+        )
 
-    db_session.add(new_item)
-    db_session.commit()
+        db_session.add(curr_item)
+        db_session.commit()
+    except Exception as e:
+        print(f"Error inserting test: {e}")
+        db_session.rollback()
     
-    result = db_session.execute(stmt)
-    # db_session.execute(
-    #     text("""
-    #         INSERT INTO item_current (user_id, class_id, item_id, version)
-    #         VALUES (:user_id, :class_id, :item_id, :version)
-    #     """),
-    #     {
-    #         "user_id": user_id,
-    #         "class_id": class_id,
-    #         "item_id": item_id,
-    #         "version": version
-    #     }
-    # )
 
 
 def insert_item_history(db_session, user_id, class_id, item_id, version, question, answer_part, question_type, difficulty, wrong_answer_explanation):
     
-    history_item = ItemHistory(
-        "user_id": user_id,
-    #         class_id = class_id,
-    #         item_id = item_id,
-    #         version = version,
-    #         question_part = question,
-    #         answer_part = answer_part,
-    #         format = question_type,
-    #         difficulty = difficulty,
-    #         wrong_answer_explanation = wrong_answer_explanation
+    try:
+        history_item = ItemHistory(
+                user_id = user_id,
+                class_id = class_id,
+                item_id = item_id,
+                version = version,
+                question_part = question,
+                answer_part = answer_part,
+                format = question_type,
+                difficulty = difficulty,
+                wrong_answer_explanation = wrong_answer_explanation
 
-    )
+        )
+        db_session.add(history_item)
+        db_session.commit()
+    except Exception as e:
+        print(f"Error inserting test: {e}")
+        db_session.rollback()
+
+
     # db_session.execute(
     #     text(
     #         """INSERT INTO item_history 
@@ -172,133 +172,211 @@ def insert_item_history(db_session, user_id, class_id, item_id, version, questio
 
 
 def insert_item_topics(db_session, user_id, class_id, item_id, version, topic_id, topic_name):
-    db_session.execute(
-        text(
-            """
-            INSERT INTO item_topics 
-            (user_id, class_id, item_id, version, topic_id, topic_name)
-            VALUES (:user_id, :class_id, :item_id, :version, :topic_id, :topic_name)
-            """
-        ),
-        {
-            "user_id": user_id,
-            "class_id": class_id,
-            "item_id": item_id,
-            "version": version,
-            "topic_id": topic_id,
-            "topic_name": topic_name,
-        },
-    )
+
+    try:
+        topic_item = ItemTopics(
+                user_id = user_id,
+                class_id = class_id,
+                item_id = item_id,
+                version = version,
+                topic_id = topic_id, 
+                topic_name = topic_name
+        )
+        
+        db_session.add(topic_item)
+        db_session.commit()
+    except Exception as e:
+        print(f"Error inserting test: {e}")
+        db_session.rollback()
 
 def insert_item_skills(db_session, user_id, class_id, item_id, version, skill_id, skill_name):
-     db_session.execute(
-                    text(
-                        """INSERT INTO item_skills 
-                        (user_id, class_id, item_id, version, skill_id, skill_name)
-                        VALUES (:user_id, :class_id, :item_id, :version, :skill_id, :skill_name)"""
-                    ),
-                    {
-                        "user_id": user_id,
-                        "class_id": class_id,
-                        "item_id": item_id,
-                        "version": version,
-                        "skill_id": skill_id,
-                        "skill_name": skill_name,
-                    },
-                )
+
+    try:
+        topic_item = ItemTopics(
+                user_id = user_id,
+                class_id = class_id,
+                item_id = item_id,
+                version = version,
+                skill_id = skill_id, 
+                skill_name = skill_name
+        )
+        
+        db_session.add(topic_item)
+        db_session.commit()
+    except Exception as e:
+        print(f"Error inserting test: {e}")
+        db_session.rollback()
+
+    #  db_session.execute(
+    #                 text(
+    #                     """INSERT INTO item_skills 
+    #                     (user_id, class_id, item_id, version, skill_id, skill_name)
+    #                     VALUES (:user_id, :class_id, :item_id, :version, :skill_id, :skill_name)"""
+    #                 ),
+    #                 {
+    #                     "user_id": user_id,
+    #                     "class_id": class_id,
+    #                     "item_id": item_id,
+    #                     "version": version,
+    #                     "skill_id": skill_id,
+    #                     "skill_name": skill_name,
+    #                 },
+    #             )
 
 def insert_tests(db_session, user_id, class_id, test_id, item_id, order_number):
-    db_session.execute(
-        text(
-            """
-            INSERT INTO tests (user_id, class_id, test_id, item_id, order_number)
-            VALUES (:user_id, :class_id, :testid, :item_id, :order_number)
-            """
-        ),
-        {
-            "user_id": user_id,
-            "class_id": class_id,
-            "testid": test_id,
-            "item_id": item_id,
-            "order_number": order_number,
-        },
+
+    try:
+        new_test = Tests(
+            user_id=user_id,
+            class_id=class_id,
+            test_id=test_id,
+            item_id=item_id,
+            order_number=order_number,
+        )
+
+        db_session.add(new_test)
+        db_session.commit()
+        print("Insert successful!")
+
+        #return new_test  
+    except Exception as e:
+        print(f"Error inserting test: {e}")
+        db_session.rollback()
+        #return None
+
+    # db_session.execute(
+    #     text(
+    #         """
+    #         INSERT INTO tests (user_id, class_id, test_id, item_id, order_number)
+    #         VALUES (:user_id, :class_id, :testid, :item_id, :order_number)
+    #         """
+    #     ),
+    #     {
+    #         "user_id": user_id,
+    #         "class_id": class_id,
+    #         "testid": test_id,
+    #         "item_id": item_id,
+    #         "order_number": order_number,
+    #     },
+    # )
+
+#COME BACK AND FIX THIS!!!
+def select_unique_class(db_session, user_id, class_id):
+
+    existing_class = (
+        db_session.query(UserClasses)
+        .filter_by(user_id=user_id, class_id=class_id)
+        .first()
     )
 
-def select_unique_class(db_session, user_id, class_id):
-    existing_class = db_session.execute(
-        text(
-            "SELECT 1 FROM user_classes WHERE user_id = :user_id AND class_id = :class_id"
-        ),
-        {"user_id": user_id, "class_id": class_id},
-    ).fetchone()
-    if not existing_class:
-            db_session.execute(
-                text(
-                "INSERT INTO user_classes (user_id, class_id) VALUES (:user_id, :class_id)"
-                ),
-                {"user_id": user_id, "class_id": class_id},
-            )
-
-def select_topic_id(db_session, userid, classid):
-    topic_id = db_session.execute(
-        text(
-            """
-            SELECT topic_id FROM item_topics
-            WHERE user_id = :user_id AND class_id = :class_id
-            ORDER BY topic_id DESC LIMIT 1
-        """
-        ),
-        {"user_id": userid, "class_id": classid},
-    ).fetchone()
+    if existing_class is None:
+        new_class = UserClasses(user_id=user_id, class_id=class_id)
+        db_session.add(new_class)
+        return new_class
+    else:
+        
+        return existing_class
     
-    return topic_id
+
+    # existing_class = db_session.execute(
+    #     text(
+    #         "SELECT 1 FROM user_classes WHERE user_id = :user_id AND class_id = :class_id"
+    #     ),
+    #     {"user_id": user_id, "class_id": class_id},
+    # ).fetchone()
+
+
+    # if not existing_class:
+    #         db_session.execute(
+    #             text(
+    #             "INSERT INTO user_classes (user_id, class_id) VALUES (:user_id, :class_id)"
+    #             ),
+    #             {"user_id": user_id, "class_id": class_id},
+    #         )
+
+    # else:
+    #     return existing_class
+
+def fetch_highest_topic_id(db_session, userid, classid):
+
+    stmt = (
+        select(ItemTopics.topic_id)
+        .where(
+            ItemTopics.user_id == userid,
+            ItemTopics.class_id == classid,
+        )
+        .order_by(desc(ItemTopics.topic_id))
+        .limit(1)
+    )
+
+    return db_session.execute(stmt).scalar_one_or_none()
     
 
 def fetch_highest_skill_id(db_session, userid, classid):
-    
-    db_session.execute(
-        text(
-            """
-            SELECT skill_id FROM item_skills
-            WHERE user_id = :user_id AND class_id = :class_id
-            ORDER BY skill_id DESC LIMIT 1
-        """
-        ),
-        {"user_id": userid, "class_id": classid},
+
+    stmt = (
+        select(ItemSkills.skill_id)
+        .where(
+            ItemTopics.user_id == userid,
+            ItemTopics.class_id == classid,
+        )
+        .order_by(desc(ItemSkills.skill_id))
+        .limit(1)
     )
+
+    return db_session.execute(stmt).scalar_one_or_none()
+    
+    # db_session.execute(
+    #     text(
+    #         """
+    #         SELECT skill_id FROM item_skills
+    #         WHERE user_id = :user_id AND class_id = :class_id
+    #         ORDER BY skill_id DESC LIMIT 1
+    #     """
+    #     ),
+    #     {"user_id": userid, "class_id": classid},
+    # )
 
 def select_requirements(db_session, user_id, req_id):
-    result = db_session.execute(
-        text(
-            """
-            SELECT content, question, answer, wrong_answer_explanation, topics, skills
-            FROM requirements
-            WHERE user_id = :user_id
-                AND req_id = :req_id
-        """
-        ),
-        {"user_id": user_id, "class_id": req_id},
+
+    stmt = (
+        select(Requirements.skill_id)
+        .where(
+            Requirements.user_id == user_id,
+            Requirements.req_id == req_id,
+        )
     )
-    return result 
+
+    return db_session.execute(stmt).scalar_one_or_none()
+
+    # result = db_session.execute(
+    #     text(
+    #         """
+    #         SELECT content, question, answer, wrong_answer_explanation, topics, skills
+    #         FROM requirements
+    #         WHERE user_id = :user_id
+    #             AND req_id = :req_id
+    #     """
+    #     ),
+    #     {"user_id": user_id, "req_id": req_id},
+    # )
+    # return result 
     
 
 
-def add_to_database(user_id, class_id, test_id, questions, order_number=None):
-    
-    conn = get_db_connection()
-    cur = conn.cursor()
+def add_to_database(db_session, user_id, class_id, test_id, questions, order_number=None):
 
     try:
-        # Ensure user-class relationship exists
-        cur.execute("""
-            SELECT 1 FROM user_classes WHERE user_id = %s AND class_id = %s
-        """, (user_id, class_id))
-        existing_class = cur.fetchone()
+       
+        existing_class = (
+            db_session.query(UserClasses)
+            .filter_by(user_id=user_id, class_id=class_id)
+            .first()
+        )
 
         if not existing_class:
-            cur.execute("""
-                INSERT INTO user_classes (user_id, class_id) VALUES (%s, %s)
-            """, (user_id, class_id))
+            new_uc = UserClasses(user_id=user_id, class_id=class_id)
+            db_session.add(new_uc)
 
         # Iterate through each topic and subtopic in the list of questions
         for question_set in questions:
@@ -321,68 +399,119 @@ def add_to_database(user_id, class_id, test_id, questions, order_number=None):
                 wrong_answer_explanation = question["wrong_answer_explanation"]
 
                 # Insert into item_current
-                cur.execute("""
-                    INSERT INTO item_current (user_id, class_id, item_id, version)
-                    VALUES (%s, %s, %s, %s)
-                """, (user_id, class_id, item_id, version))
+                #replace with
+
+                item_current = ItemCurrent(
+                    user_id=user_id,
+                    class_id=class_id,
+                    item_id=item_id,
+                    version=version,
+                )
+                db_session.add(item_current)
+
+
+                item_history = ItemHistory(
+                    user_id=user_id,
+                    class_id=class_id,
+                    item_id=item_id,
+                    version=version,
+                    question_part=formatted_question_part,
+                    answer_part=answer_part,
+                    format=format_type,
+                    difficulty=difficulty,
+                    wrong_answer_explanation=(
+                        wrong_answer_explanation if wrong_answer_explanation else None
+                    ),
+                )
+                db_session.add(item_history)
 
                 # Insert into item_history
-                cur.execute("""
-                    INSERT INTO item_history (user_id, class_id, item_id, version, question_part, answer_part, format, difficulty, wrong_answer_explanation)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
-                """, (
-                    user_id, class_id, item_id, version,
-                    formatted_question_part, answer_part,
-                    format_type, difficulty, wrong_answer_explanation if wrong_answer_explanation else None
-                ))
+                # cur.execute("""
+                #     INSERT INTO item_history (user_id, class_id, item_id, version, question_part, answer_part, format, difficulty, wrong_answer_explanation)
+                #     VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                # """, (
+                #     user_id, class_id, item_id, version,
+                #     formatted_question_part, answer_part,
+                #     format_type, difficulty, wrong_answer_explanation if wrong_answer_explanation else None
+                # ))
 
                 # Insert into item_topics
                 for related_topic in question.get("relatedtopics", []):
                     related_topic_id = f"{related_topic.replace(' ', '_')}_{class_id}"
-                    cur.execute("""
-                        INSERT INTO item_topics (user_id, class_id, item_id, version, topic_id, topic_name)
-                        VALUES (%s, %s, %s, %s, %s, %s)
-                    """, (user_id, class_id, item_id, version, related_topic_id, related_topic))
+                    item_topic = ItemTopics(
+                        user_id=user_id,
+                        class_id=class_id,
+                        item_id=item_id,
+                        version=version,
+                        topic_id=related_topic_id,
+                        topic_name=related_topic,
+                    )
+                    db_session.add(item_topic)
+                    # cur.execute("""
+                    #     INSERT INTO item_topics (user_id, class_id, item_id, version, topic_id, topic_name)
+                    #     VALUES (%s, %s, %s, %s, %s, %s)
+                    # """, (user_id, class_id, item_id, version, related_topic_id, related_topic))
 
                 # Insert into item_skills
                 for skill_name in question.get("relatedskills", []):
                     skill_id = f"{skill_name.replace(' ', '_')}_{class_id}"
-                    cur.execute("""
-                        INSERT INTO item_skills (user_id, class_id, item_id, version, skill_id, skill_name)
-                        VALUES (%s, %s, %s, %s, %s, %s)
-                    """, (user_id, class_id, item_id, version, skill_id, skill_name))
+                    item_skill = ItemSkills(
+                        user_id=user_id,
+                        class_id=class_id,
+                        item_id=item_id,
+                        version=version,
+                        skill_id=skill_id,
+                        skill_name=skill_name,
+                    )
+                    db_session.add(item_skill)
+                    # cur.execute("""
+                    #     INSERT INTO item_skills (user_id, class_id, item_id, version, skill_id, skill_name)
+                    #     VALUES (%s, %s, %s, %s, %s, %s)
+                    # """, (user_id, class_id, item_id, version, skill_id, skill_name))
 
                 new_order = fetch_next_order_number(cur, user_id, class_id, test_id, order_number)
 
                 # Link each question to the test in the `tests` table
-                cur.execute("""
-                    INSERT INTO tests (user_id, class_id, test_id, item_id, order_number)
-                    VALUES (%s, %s, %s, %s, %s)
-                """, (user_id, class_id, test_id, item_id, new_order))
+                test_row = Tests(
+                    user_id=user_id,
+                    class_id=class_id,
+                    test_id=test_id,
+                    item_id=item_id,
+                    order_number=new_order,
+                )
+                db_session.add(test_row)
+
+                # cur.execute("""
+                #     INSERT INTO tests (user_id, class_id, test_id, item_id, order_number)
+                #     VALUES (%s, %s, %s, %s, %s)
+                # """, (user_id, class_id, test_id, item_id, new_order))
 
         # Commit transaction
-        conn.commit()
+        db_session.commit()
 
     except Exception as e:
-        conn.rollback()
+        db_session.rollback()
         raise Exception(f"Database operation failed: {e}")
     
-    finally:
-        cur.close()
-        conn.close()
+    # finally:
+    #     cur.close()
+    #     conn.close()
 
-def fetch_item_latest_version(user_id, class_id, item_id):
-    conn = get_db_connection()
-    cur = conn.cursor()
-        
+def fetch_item_latest_version(db_session, user_id, class_id, item_id):
+    
     try:
         # Get the latest version of the item
-        cur.execute("""
-            SELECT version FROM item_current
-            WHERE user_id = %s AND class_id = %s AND item_id = %s
-        """, (user_id, class_id, item_id))
-        latest_version = cur.fetchone()
+        # cur.execute("""
+        #     SELECT version FROM item_current
+        #     WHERE user_id = %s AND class_id = %s AND item_id = %s
+        # """, (user_id, class_id, item_id))
+        # latest_version = cur.fetchone()
         
+        latest_version = (
+            db_session.query(ItemCurrent.version)
+            .filter_by(user_id=user_id, class_id=class_id, item_id=item_id)
+            .first()
+        )
 
         if latest_version:
             return latest_version[0]
@@ -391,10 +520,7 @@ def fetch_item_latest_version(user_id, class_id, item_id):
     except Exception as e:
         raise Exception(f"Failed to fetch latest version: {e}")
     
-    finally:
-        cur.close()
-        conn.close()
-  
+   
 def fetch_item_data(user_id, class_id, item_id, version):
     conn = get_db_connection()
     cur = conn.cursor()
