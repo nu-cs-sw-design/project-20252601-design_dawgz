@@ -19,7 +19,7 @@ from io import BytesIO
 from pdf2image import convert_from_bytes
 from models import ExtractedQuestion
 from ...utils.class_info import get_class_info
-from ...utils.db_operations import fetch_next_order_number, fetch_highest_topic_id, insert_item_current, insert_item_history, select_unique_class, insert_item_skills, insert_tests, select_topic_id, select_skill_id, select_skill_id_from_item_skills
+from ...utils.db_operations import fetch_next_order_number, fetch_highest_topic_id, insert_item_current, insert_item_history, select_unique_class, insert_item_skills, insert_tests, select_topic_id, select_skill_id
 from ...utils.testconvert import normalize_pdf_images_to_summary
 from werkzeug.utils import secure_filename
 
@@ -41,8 +41,8 @@ def process_syllabus():
         return jsonify({"error": "No file uploaded"}), 400
 
     files = request.files.getlist("file")
-    user_id = request.form.get("user_id")
-    class_id = request.form.get("class_id")
+    userid = request.form.get("user_id")
+    classid = request.form.get("class_id")
     test_topic = request.form.get(
         "test_topic"
     )  # for some reason this is the user input
@@ -51,12 +51,12 @@ def process_syllabus():
     num_frq = request.form.get("num_frq")
     order_number = request.form.get("order_number")
 
-    if not all([user_id, class_id, test_topic, test_id, num_mcq, num_frq]):
+    if not all([userid, classid, test_topic, test_id, num_mcq, num_frq]):
         return jsonify({"error": "Missing required form data"}), 400
 
     print("Processing syllabus...")
 
-    info = get_class_info(user_id, class_id)
+    info = get_class_info(userid, classid)
     classdesc = info["class_description"]
 
     try:
@@ -126,7 +126,7 @@ def process_syllabus():
     for i in range(num_mcq + num_frq):
         question_type = "MC" if i < num_mcq else "FR"
         rendered_prompt = prompt_template.format(
-            class_name=class_id,
+            class_name=classid,
             class_description=classdesc,
             user_info=test_topic,
             syllabus_text=full_text,
@@ -156,13 +156,11 @@ def process_syllabus():
 
     inserted_items = []
 
-#SQL: SELECT TOPIC ID FROM ITEM_TOPICS
-#changed to helper function fetch_highest_topic_id
-    highest_topic_id = fetch_highest_topic_id(db.session, user_id, class_id)
+    # Select highest topic_id
+    highest_topic_result = fetch_highest_topic_id(db.session, userid, classid)
 
-#SQL: SELECT SKILL ID FROM ITEM_SKILLS 
-    
-    highest_skill_result = select_skill_id_from_item_skills(db.session, user_id, class_id).fetchone()
+    # Select highest skill_id
+    highest_skill_result = select_skill_id(db.session, userid, classid)
 
     def get_next_id(current_id, prefix):
         if not current_id:
@@ -174,7 +172,7 @@ def process_syllabus():
             return f"{prefix}_0"
 
     current_topic_id = get_next_id(
-        highest_topic_id, "topic"
+        highest_topic_result, "topic"
     )
     current_skill_id = get_next_id(
         highest_skill_result[0] if highest_skill_result else None, "skill"
@@ -184,7 +182,7 @@ def process_syllabus():
 
     if order_number is not None:
         fetch_next_order_number(
-            db.session, user_id, class_id, test_id, order_number, num_mcq + num_frq
+            db.session, userid, classid, test_id, order_number, num_mcq + num_frq
         )
 
     try:
@@ -208,12 +206,10 @@ def process_syllabus():
             else:
                 answer_part = item_response.answer_part
 
-#SQL: INSERT INTO ITEM_CURRENT
-            insert_item_current(db.session, user_id, class_id, item_id, version)
+            # Insert into item_current
+            insert_item_current(db.session, userid, classid, item_id, version)
 
-#helper function takes care of both instances, where a user class exists and when it doesnt
-            select_unique_class(db.session, user_id, class_id)
-
+            select_unique_class(db.session, userid, classid)
             # existing_class = db.session.execute(
             #     text(
             #         "SELECT 1 FROM user_classes WHERE user_id = :user_id AND class_id = :class_id"
@@ -228,7 +224,8 @@ def process_syllabus():
             #         {"user_id": user_id, "class_id": class_id},
             #     )
 
-            insert_item_history(db.session, user_id, class_id, item_id, version, question, answer_part, question_type, difficulty, wrong_answer_explanation)
+            # Insert into item_history
+            insert_item_history(db.session, userid, classid, item_id, version, question, answer_part, question_type, difficulty, wrong_answer_explanation)
 
             if idx == 0 and order_number is not None:
                 current_order = order_number
@@ -236,11 +233,11 @@ def process_syllabus():
                 current_order = order_number + idx
             else:
                 current_order = fetch_next_order_number(
-                    db.session, user_id, class_id, test_id
+                    db.session, userid, classid, test_id
                 )
 
-            #SQL: INSERT INTO TESTS
-            insert_tests(db.session, user_id, class_id, test_id, item_id, order_number)
+            # Insert into tests
+            insert_tests(db.session, userid, classid, test_id, item_id, order_number)
             # db.session.execute(
             #     text(
             #         """INSERT INTO tests 
@@ -256,7 +253,7 @@ def process_syllabus():
             #     },
             # )
 
-            #SQL: INSERT INTO ITEM TOPICS
+            # Insert into item_topics
             for topic_name in item_response.relatedtopics:
                 topic_id = get_next_id(current_topic_id, "topic")
                 current_topic_id = topic_id
@@ -276,11 +273,11 @@ def process_syllabus():
                 #     },
                 # )
 
-            #SQL: INSERT INTO ITEM_SKILLS
+            # Insert into item_skills
             for skill_name in item_response.relatedskills:
                 skill_id = get_next_id(current_skill_id, "skill")
                 current_skill_id = skill_id
-                insert_item_skills(db.session, user_id, class_id, item_id, version, skill_id, skill_name)
+                insert_item_skills(db.session, userid, classid, item_id, version, skill_id, skill_name)
                 # db.session.execute(
                 #     text(
                 #         """INSERT INTO item_skills 
@@ -426,12 +423,11 @@ def pdf_upload():
         except (IndexError, ValueError):
             return f"{prefix}_0"
 
-#SQL: SELECT FROM ITEM_TOPICS
-#HELPER: 
-    highest_topic_result = select_topic_id(db.session, userid, classid).fetchone()
+    # Fetch highest topic ID
+    highest_topic_result = select_topic_id(db.session, userid, classid)
 
-#SQL: SELECT FROM ITEM_SKILLS
-    highest_skill_result = select_skill_id(db.session, userid, classid).fetchone()
+    # Fetch highest skill ID
+    highest_skill_result = select_skill_id(db.session, userid, classid)
 
     current_topic_id = get_next_id(
         highest_topic_result[0] if highest_topic_result else None, "topic"
@@ -475,7 +471,7 @@ def pdf_upload():
             #     {"user_id": userid, "class_id": classid},
             # ).fetchone()
 
-            # #SQL: INSERT INTO USER CLASSES
+
             # if not existing_class:
             #     db.session.execute(
             #         text(
@@ -485,10 +481,8 @@ def pdf_upload():
             #     )
                 
           
-            #helper func replacement 
-            insert_item_current(db.session, user_id, class_id, item_id, version)
-
-            #old SQL: INSERT INTO ITEM CURRENT
+            # Insert into item_current
+            insert_item_current(db.session, userid, classid, item_id, version)
             # db.session.execute(
             #     text(
             #         """
@@ -506,7 +500,7 @@ def pdf_upload():
 
             
 
-# SQL: INSERT INTO ITEM HISTORy
+            # Insert into item_history
             insert_item_history(db.session, userid, classid, item_id, version, question, answer_part, question_type, difficulty, wrong_answer_explanation)
             # db.session.execute(
             #     text(
@@ -538,7 +532,7 @@ def pdf_upload():
                     db.session, userid, classid, test_id
                 )
 
-#SQL: INSERT INTO TESTS 
+            # Insert into tests
             insert_tests(db.session, userid, classid, test_id, item_id, current_order)
             # db.session.execute(
             #     text(
@@ -556,7 +550,7 @@ def pdf_upload():
             #     },
             # )
 
-#SQL: INSERT INTO ITEM TOPICS
+            # Insert into item_topics
             for topic_name in item.relatedtopics:
                 topic_id = get_next_id(current_topic_id, "topic")
                 current_topic_id = topic_id
@@ -578,7 +572,7 @@ def pdf_upload():
                 #     },
                 # )
 
-#SQL: INSERT INTO ITEM_SKILLS
+            # Insert into item_skills
             for skill_name in item.relatedskills:
                 skill_id = get_next_id(current_skill_id, "skill")
                 current_skill_id = skill_id
